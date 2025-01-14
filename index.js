@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const scrapeImdb = require('./ScrapeImdb.js')
 
 require("dotenv").config();
 
@@ -25,6 +26,10 @@ async function Search(searchQuery) {
 
         allTorrents.sort((a, b) => b.seeds - a.seeds)
         allTorrents = allTorrents.filter(torrent => torrent.imdb);
+        await Promise.all(
+        allTorrents.map(async (torrent) => {
+            torrent["imgurl"] = await scrapeImdb.getImdbImg(torrent.imdb);
+        }))
         return allTorrents;
     } catch (error) {
         console.error('Error fetching torrents:', error);
@@ -34,11 +39,10 @@ async function Search(searchQuery) {
 
 app.get('/search/:query', async (req, res) => {
     data = await Search(req.params.query)
-    res.json({status:"success", data: data});
+    res.json({data: data});
   });
 
 const port = process.env.PORT || 3000
 app.listen(port, () => {
     console.log(`Server is running on port:${port}`);
 });
-
