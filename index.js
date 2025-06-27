@@ -26,10 +26,10 @@ async function Search(searchQuery) {
 
         allTorrents.sort((a, b) => b.seeds - a.seeds)
         allTorrents = allTorrents.filter(torrent => torrent.imdb);
-        await Promise.all(
-        allTorrents.map(async (torrent) => {
-            torrent["imgurl"] = await scrapeImdb.getImdbImg(torrent.imdb);
-        }))
+        if (allTorrents.length === 0) {
+            return [];
+        }
+        allTorrents[0]["imgurl"] = await scrapeImdb.getImdbImg(allTorrents[0].imdb);
         return allTorrents;
     } catch (error) {
         console.error('Error fetching torrents:', error);

@@ -15,9 +15,7 @@ async function getImdbImg(imdbId) {
 
     const $ = cheerio.load(response.data);
 
-    const imgSelector =
-      "#__next > main > div > section.ipc-page-background.ipc-page-background--base.sc-afa4bed1-0.iMxoKo > section > div:nth-child(5) > section > section > div.sc-9a2a0028-4.eeUUGv > div.sc-9a2a0028-5.iQuLZA > div.sc-9a2a0028-7.fdOinQ > div > div.ipc-media.ipc-media--poster-27x40.ipc-image-media-ratio--poster-27x40.ipc-media--media-radius.ipc-media--baseAlt.ipc-media--poster-l.ipc-poster__poster-image.ipc-media__img > img";
-
+    const imgSelector = "#__next > main > div > section.ipc-page-background.ipc-page-background--base.sc-abcc9be3-0.bldfgO > section > div:nth-child(5) > section > section > div.sc-42c2285c-4.hBMxVJ > div.sc-42c2285c-5.ePSDbO > div.sc-42c2285c-7.hwVTly > div > div.ipc-media.ipc-media--poster-27x40.ipc-image-media-ratio--poster-27x40.ipc-media--media-radius.ipc-media--baseAlt.ipc-media--poster-l.ipc-poster__poster-image.ipc-media__img > img"
     const imgSrc = $(imgSelector).attr("src");
 
     if (imgSrc) {
