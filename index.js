@@ -52,6 +52,39 @@ async function Search(searchQuery) {
     return [];
 }
 
+// Set a realistic User-Agent for all outgoing HTTP requests
+const REALISTIC_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36';
+
+// Patch global fetch if available (node-fetch v3+)
+if (typeof fetch !== 'undefined') {
+    const originalFetch = fetch;
+    global.fetch = (url, options = {}) => {
+        options.headers = options.headers || {};
+        if (!options.headers['User-Agent'] && !options.headers['user-agent']) {
+            options.headers['User-Agent'] = REALISTIC_USER_AGENT;
+        }
+        return originalFetch(url, options);
+    };
+}
+
+// Patch global http(s) request for libraries using http/https
+const http = require('http');
+const https = require('https');
+
+function patchAgentRequest(agent) {
+    const originalRequest = agent.request;
+    agent.request = function patchedRequest(options, callback) {
+        if (typeof options === 'object') {
+            options.headers = options.headers || {};
+            if (!options.headers['User-Agent'] && !options.headers['user-agent']) {
+                options.headers['User-Agent'] = REALISTIC_USER_AGENT;
+            }
+        }
+        return originalRequest.call(this, options, callback);
+    };
+}
+patchAgentRequest(http.Agent.prototype);
+patchAgentRequest(https.Agent.prototype);
 
 app.get('/search/:query', async (req, res) => {
     try {
