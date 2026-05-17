@@ -28,13 +28,19 @@ async function Search(searchQuery) {
                 allTorrents = [...allTorrents, ...torrents];
             }
             allTorrents.sort((a, b) => b.seeds - a.seeds);
-            allTorrents = allTorrents.filter(torrent => torrent.imdb);
-            if (allTorrents.length > 0) {
-                console.log(`[SUCCESS] Found ${allTorrents.length} torrents with IMDB info from ${provider}`);
-                allTorrents[0]["imgurl"] = await scrapeImdb.getImdbImg(allTorrents[0].imdb);
-                return allTorrents;
+            // Separate torrents with and without imdb
+            const torrentsWithImdb = allTorrents.filter(torrent => torrent.imdb);
+            const torrentsWithoutImdb = allTorrents.filter(torrent => !torrent.imdb);
+            let prioritizedTorrents = [];
+            if (torrentsWithImdb.length > 0) {
+                console.log(`[SUCCESS] Found ${torrentsWithImdb.length} torrents with IMDB info from ${provider}`);
+                torrentsWithImdb[0]["imgurl"] = await scrapeImdb.getImdbImg(torrentsWithImdb[0].imdb);
+            }
+            prioritizedTorrents = [...torrentsWithImdb, ...torrentsWithoutImdb];
+            if (prioritizedTorrents.length > 0) {
+                return prioritizedTorrents;
             } else {
-                console.log(`[WARN] No torrents with IMDB info found from ${provider}`);
+                console.log(`[WARN] No torrents found from ${provider}`);
             }
         } catch (error) {
             console.error(`[ERROR] Error fetching torrents from ${provider}:`, error.message || error);
