@@ -3,227 +3,1567 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Torrent Search</title>
+    <title>Torrent Streamer & Search Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-color: #080b11;
+            --card-bg: rgba(17, 24, 39, 0.6);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-cyan: #00d4ff;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #3b82f6 100%);
+            --gradient-purple: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #eee;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 212, 255, 0.12) 0%, transparent 40%);
+            color: var(--text-primary);
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
         }
+
+        /* Ambient background glow elements */
+        .ambient-glow-1 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: var(--accent-purple);
+            filter: blur(150px);
+            opacity: 0.15;
+            top: -100px;
+            left: 10%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .ambient-glow-2 {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--accent-cyan);
+            filter: blur(120px);
+            opacity: 0.1;
+            bottom: 10%;
+            right: 10%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
         .container {
-            max-width: 900px;
+            max-width: 1280px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
-        h1 {
+
+        header {
             text-align: center;
             margin-bottom: 30px;
-            color: #00d4ff;
-            font-size: 2.5rem;
+            margin-top: 10px;
         }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 50%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -0.03em;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            font-weight: 400;
+        }
+
+        /* Glassmorphism card utility */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            transition: var(--transition-smooth);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Tab Switcher */
+        .tabs-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .tabs {
+            display: flex;
+            background: rgba(17, 24, 39, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 6px;
+            border-radius: 30px;
+            gap: 4px;
+        }
+        .tab-btn {
+            font-family: 'Outfit', sans-serif;
+            padding: 10px 28px;
+            border: none;
+            border-radius: 24px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+        }
+        .tab-btn:hover {
+            color: #fff;
+        }
+        .tab-btn.active {
+            background: var(--gradient-accent);
+            color: #080b11;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Search styling */
         .search-box {
             display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
+            gap: 12px;
+            margin-bottom: 24px;
         }
-        input[type="text"] {
+        .input-group {
+            position: relative;
             flex: 1;
-            padding: 14px 20px;
-            border: none;
-            border-radius: 8px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 16px 20px;
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
             font-size: 1rem;
-            background: #0f3460;
+            background: rgba(10, 15, 30, 0.7);
             color: #fff;
             outline: none;
+            font-family: inherit;
+            transition: var(--transition-smooth);
         }
-        input[type="text"]::placeholder { color: #888; }
+        textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+            background: rgba(10, 15, 30, 0.9);
+        }
+        input[type="text"]::placeholder, textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
         button {
-            padding: 14px 28px;
+            font-family: 'Outfit', sans-serif;
+            padding: 16px 32px;
             border: none;
-            border-radius: 8px;
-            background: #00d4ff;
-            color: #1a1a2e;
+            border-radius: 12px;
             font-size: 1rem;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
         }
-        button:hover { background: #00a8cc; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .error {
-            background: #e94560;
-            padding: 14px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
+        button.primary {
+            background: var(--gradient-accent);
+            color: #080b11;
         }
-        .torrent {
-            background: #0f3460;
-            border-radius: 10px;
-            padding: 18px;
-            margin-bottom: 15px;
-            transition: transform 0.2s;
+        button.primary:hover {
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+            transform: translateY(-1px);
         }
-        .torrent:hover { transform: translateX(5px); }
-        .torrent-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 10px;
+        button.secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: #fff;
+        }
+        button.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        button.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            color: #fff;
+        }
+        button.danger:hover {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+            transform: translateY(-1px);
+        }
+        button.action-btn {
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Results Grid */
+        #results {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .torrent-card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 20px;
+        }
+        .torrent-card:hover {
+            transform: translateX(4px);
+            border-color: rgba(0, 212, 255, 0.2);
+        }
+        .poster {
+            width: 70px;
+            height: 105px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+        }
+        .torrent-info-block {
+            flex: 1;
+            min-width: 0;
+        }
+        .torrent-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .torrent-meta {
             display: flex;
-            gap: 15px;
-            font-size: 0.9rem;
-            color: #aaa;
-            margin-bottom: 12px;
+            gap: 16px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
             flex-wrap: wrap;
+            margin-bottom: 12px;
         }
-        .torrent-meta span { display: flex; align-items: center; gap: 4px; }
-        .seed { color: #4ecca3; }
-        .peer { color: #e94560; }
-        .magnet-box {
+        .torrent-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .seed { color: var(--accent-green); font-weight: 500; }
+        .peer { color: #f43f5e; font-weight: 500; }
+        
+        .magnet-action-row {
             display: flex;
             gap: 8px;
             align-items: center;
         }
         .magnet-input {
             flex: 1;
-            padding: 10px 14px;
-            border: none;
-            border-radius: 6px;
-            background: #1a1a2e;
-            color: #00d4ff;
-            font-size: 0.85rem;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--accent-cyan);
+            font-size: 0.8rem;
+            outline: none;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Stream Dashboard Split Pane */
+        .stream-dashboard {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .dashboard-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .dashboard-main {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Active streams list */
+        .active-streams-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .active-stream-item {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .active-stream-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--accent-cyan);
+        }
+        .active-stream-item.selected {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.08);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+        }
+        .active-stream-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 6px;
+        }
+        .active-stream-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .active-stream-progress {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .active-stream-progress-fill {
+            height: 100%;
+            background: var(--gradient-accent);
+            border-radius: 2px;
+            transition: width 0.4s ease;
+        }
+
+        .no-active-streams {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+        }
+
+        /* Selected Torrent Detail Panel */
+        .torrent-detail-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            color: #fff;
+            margin-bottom: 12px;
             word-break: break-all;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-item {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .stat-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .progress-container {
+            margin-bottom: 16px;
+        }
+        .progress-bar-large {
+            height: 10px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .progress-bar-large-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff 0%, #3b82f6 50%, #8b5cf6 100%);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* File list categories */
+        .file-section {
+            margin-bottom: 16px;
+        }
+        .section-header {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .file-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            gap: 12px;
+            transition: var(--transition-smooth);
+        }
+        .file-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        .file-row.active {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 212, 255, 0.04);
+        }
+        .file-main-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+        .file-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        .file-name-meta {
+            min-width: 0;
+        }
+        .file-name-text {
+            font-size: 0.85rem;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+        .file-size-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            font-size: 0.85rem;
+        }
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+        .icon-btn.play-btn:hover {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+        .icon-btn.vlc-btn:hover {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+            border-color: #f97316;
+        }
+
+        /* Player panel */
+        .player-card {
+            border-top: 3px solid var(--accent-blue);
+        }
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .player-header h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 15px;
+        }
+        .player-container {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
             outline: none;
         }
-        .copy-btn {
-            padding: 10px 18px;
-            font-size: 0.85rem;
-            white-space: nowrap;
+        .image-display {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
-        .copied {
-            background: #4ecca3 !important;
-            color: #1a1a2e !important;
-        }
-        .loading {
+        .unsupported-format {
             text-align: center;
-            font-size: 1.2rem;
-            color: #00d4ff;
-            padding: 40px;
+            padding: 30px;
+            max-width: 400px;
         }
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: #888;
+        .unsupported-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #f97316;
+        }
+        .unsupported-title {
+            font-family: 'Outfit', sans-serif;
             font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
-        .poster {
-            width: 60px;
-            height: 90px;
-            object-fit: cover;
-            border-radius: 6px;
-            margin-right: 14px;
-            float: left;
+        .unsupported-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.4;
         }
-        .torrent-header { overflow: hidden; }
+
+        /* Status UI Elements */
+        .loading-spinner {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--accent-cyan);
+        }
+        .spinner {
+            border: 3px solid rgba(0, 212, 255, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--accent-cyan);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        
+        .error-banner {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            color: #fca5a5;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Custom Toast notification system */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 350px;
+            width: calc(100% - 40px);
+            pointer-events: none;
+        }
+        .toast {
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-left: 4px solid var(--accent-blue);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            pointer-events: auto;
+            transform: translateX(120%);
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .toast.success { border-left-color: var(--accent-green); }
+        .toast.error { border-left-color: var(--accent-red); }
+        .toast.warning { border-left-color: #f97316; }
+        
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toast-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .toast-close:hover { color: #fff; }
+        
+        @keyframes slideIn {
+            to { transform: translateX(0); }
+        }
+        .toast.fade-out {
+            animation: fadeOut 0.4s ease forwards;
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 950px) {
+            .stream-dashboard {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+            .glass-card {
+                padding: 16px;
+            }
+            .search-box {
+                flex-direction: column;
+            }
+            .search-box button {
+                width: 100%;
+            }
+            .torrent-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .poster {
+                width: 60px;
+                height: 90px;
+            }
+            .magnet-action-row {
+                width: 100%;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
+
+    <div id="toast-container"></div>
+
     <div class="container">
-        <h1>🧲 Torrent Search</h1>
-        <div class="search-box">
-            <input type="text" id="query" placeholder="Search for movies, shows, software..." onkeydown="if(event.key==='Enter')search()">
-            <button id="searchBtn" onclick="search()">Search</button>
+        <header>
+            <h1>🧲 Torrent Search & Streamer</h1>
+            <p>Search torrents and stream video files instantly in your browser or VLC player.</p>
+        </header>
+
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('search')">🔍 Search Torrents</button>
+                <button class="tab-btn" onclick="switchTab('stream')">▶️ Stream Dashboard</button>
+            </div>
         </div>
-        <div id="results"></div>
+
+        <!-- SEARCH TAB -->
+        <div id="search-tab" class="tab-content active">
+            <div class="glass-card" style="margin-bottom: 24px;">
+                <div class="search-box">
+                    <div class="input-group">
+                        <input type="text" id="query" placeholder="Type movie, TV show, software, or anime name..." onkeydown="if(event.key==='Enter')search()">
+                    </div>
+                    <button class="primary" id="searchBtn" onclick="search()">🔍 Search</button>
+                </div>
+            </div>
+            <div id="results">
+                <div class="no-data">Use the search box above to find torrents from enabled providers.</div>
+            </div>
+        </div>
+
+        <!-- STREAM TAB -->
+        <div id="stream-tab" class="tab-content">
+            <div class="stream-dashboard">
+                
+                <!-- LEFT COLUMN: CONTROLS & SELECTION -->
+                <div class="dashboard-sidebar">
+                    <div class="glass-card">
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: var(--accent-cyan); margin-bottom: 12px;">📎 Add Magnet Link</h2>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <textarea id="magnetInput" placeholder="Paste magnet:?xt=urn:btih:... link here"></textarea>
+                            <button class="primary" style="width: 100%;" id="loadBtn" onclick="addTorrent(event)">⚡ Load Stream</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-card">
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: var(--accent-blue); margin-bottom: 10px;">💾 Active Streams</h2>
+                        <div id="activeStreamsContainer">
+                            <div class="no-active-streams">No active streams on server</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: SELECTION VIEW & PLAYBACK -->
+                <div class="dashboard-main">
+                    
+                    <!-- Torrent Detail Card -->
+                    <div class="glass-card torrent-detail-card" id="torrentDetailCard" style="display: none;">
+                        <h3 id="torrentName">Loading torrent information...</h3>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">Size</div>
+                                <div class="stat-val" id="torrentSize">0 B</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Peers</div>
+                                <div class="stat-val" id="torrentPeers" style="color: var(--accent-cyan);">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Download Speed</div>
+                                <div class="stat-val" id="torrentSpeed" style="color: var(--accent-green);">0 B/s</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Progress</div>
+                                <div class="stat-val" id="torrentProgressText">0%</div>
+                            </div>
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="progress-bar-large">
+                                <div class="progress-bar-large-fill" id="progressBarFill"></div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+                            <button class="danger action-btn" onclick="removeTorrent()">🗑️ Stop & Remove</button>
+                            <button class="secondary action-btn" onclick="copyStreamMagnet()">📋 Copy Magnet Link</button>
+                        </div>
+
+                        <!-- Video Files -->
+                        <div class="file-section" id="videoFilesSection" style="display: none;">
+                            <div class="section-header">🎬 Playable Videos</div>
+                            <div class="file-list" id="videoFilesList"></div>
+                        </div>
+
+                        <!-- Image Files -->
+                        <div class="file-section" id="imageFilesSection" style="display: none;">
+                            <div class="section-header">🖼️ Images</div>
+                            <div class="file-list" id="imageFilesList"></div>
+                        </div>
+
+                        <!-- Other Files -->
+                        <div class="file-section" id="otherFilesSection" style="display: none;">
+                            <div class="section-header">📁 Other Files</div>
+                            <div class="file-list" id="otherFilesList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Video Player Card -->
+                    <div class="glass-card player-card" id="playerCard" style="display: none;">
+                        <div class="player-header">
+                            <h4 id="playerTitle">Now Playing</h4>
+                            <button class="icon-btn" onclick="closePlayer()" title="Close Player">✕</button>
+                        </div>
+                        <div class="player-container" id="playerContainer">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
     </div>
 
     <script>
+        // State
+        let currentInfoHash = null;
+        let currentMagnet = null;
+        let statsInterval = null;
+        let activeStreamsInterval = null;
+        let currentFiles = [];
+        let activeFileIndex = null;
+
+        // Custom Toast system
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                info: 'ℹ️',
+                success: '✅',
+                error: '❌',
+                warning: '⚠️'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <span>${icons[type] || 'ℹ️'}</span>
+                    <span>${message}</span>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 400);
+            }, 4500);
+        }
+
+        // Tab Switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.toLowerCase().includes(tab));
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            document.getElementById(tab + '-tab').classList.add('active');
+
+            if (tab === 'stream') {
+                loadActiveStreams();
+                if (!activeStreamsInterval) {
+                    activeStreamsInterval = setInterval(loadActiveStreams, 5000);
+                }
+            } else {
+                if (activeStreamsInterval) {
+                    clearInterval(activeStreamsInterval);
+                    activeStreamsInterval = null;
+                }
+            }
+        }
+
+        // Helper to programmatically load streaming tab
+        function switchTabDirect(tab) {
+            switchTab(tab);
+        }
+
+        // Page Load Initializations
+        window.addEventListener('DOMContentLoaded', () => {
+            // Load active streams in background on startup
+            loadActiveStreams();
+            // Start listening to search query enter key
+            document.getElementById('query').focus();
+        });
+
+        // ==================== SEARCH SECTION ====================
         async function search() {
             const query = document.getElementById('query').value.trim();
             const btn = document.getElementById('searchBtn');
             const results = document.getElementById('results');
 
-            if (!query) return;
+            if (!query) {
+                showToast('Please type a search query first!', 'warning');
+                return;
+            }
 
             btn.disabled = true;
-            btn.textContent = 'Searching...';
-            results.innerHTML = '<div class="loading">Searching torrents...</div>';
+            btn.innerHTML = `<span>⏳ Searching...</span>`;
+            results.innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Searching providers for "${escapeHtml(query)}"...</p>
+                </div>
+            `;
 
             try {
                 const res = await fetch('/search/' + encodeURIComponent(query));
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    results.innerHTML = `<div class="error-banner">❌ ${escapeHtml(data.error || 'No results found.')}</div>`;
+                    showToast('Search request completed with no matches.', 'warning');
+                    return;
+                }
+                
                 const data = await res.json();
-
-                if (!res.ok || !data.data || data.data.length === 0) {
-                    results.innerHTML = '<div class="no-results">No torrents found. Try a different query.</div>';
+                if (!data.data || data.data.length === 0) {
+                    results.innerHTML = `<div class="no-data">No torrents found. Try modifying your search keywords.</div>`;
+                    showToast('No matching torrents found.', 'info');
                     return;
                 }
 
                 renderResults(data.data);
+                showToast(`Found ${data.data.length} results.`, 'success');
             } catch (err) {
-                results.innerHTML = '<div class="error">Error fetching results. Please try again.</div>';
+                console.error(err);
+                results.innerHTML = `<div class="error-banner">❌ Failed to search torrents. Server might be offline or blocked.</div>`;
+                showToast('Network error during search.', 'error');
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'Search';
+                btn.innerHTML = `🔍 Search`;
             }
         }
 
         function renderResults(torrents) {
             const results = document.getElementById('results');
-            results.innerHTML = torrents.map((t, i) => `
-                <div class="torrent">
-                    ${t.imgurl ? `<img src="${escapeHtml(t.imgurl)}" class="poster" alt="poster">` : ''}
-                    <div class="torrent-header">
-                        <div class="torrent-title">${escapeHtml(t.title)}</div>
-                        <div class="torrent-meta">
-                            <span class="seed">🌱 ${t.seeds || 0} seeds</span>
-                            <span class="peer">🔻 ${t.peers || 0} peers</span>
-                            <span>📦 ${t.size || 'N/A'}</span>
-                            <span>🏷️ ${escapeHtml(t.provider || 'Unknown')}</span>
+            results.innerHTML = torrents.map((t, i) => {
+                const cleanMagnet = t.magnet ? t.magnet.replace(/"/g, '&quot;') : '';
+                return `
+                    <div class="glass-card torrent-card">
+                        ${t.imgurl ? `<img src="${escapeHtml(t.imgurl)}" class="poster" alt="poster" onerror="this.style.display='none'">` : ''}
+                        <div class="torrent-info-block">
+                            <div class="torrent-title" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+                            <div class="torrent-meta">
+                                <span class="seed">🌱 ${t.seeds || 0} Seeds</span>
+                                <span class="peer">🔻 ${t.peers || 0} Peers</span>
+                                <span>📦 ${t.size || 'N/A'}</span>
+                                <span>🏷️ ${escapeHtml(t.provider || 'Unknown')}</span>
+                            </div>
+                            <div class="magnet-action-row">
+                                <input type="text" class="magnet-input" id="magnet-${i}" value="${escapeHtml(t.magnet || '')}" readonly onclick="this.select()">
+                                <button class="action-btn secondary" id="btn-${i}" onclick="copyMagnetText(${i})">📋 Copy Magnet</button>
+                                <button class="action-btn primary" onclick="loadMagnet('${escapeHtml(cleanMagnet)}')">▶️ Stream</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="magnet-box">
-                        <input type="text" class="magnet-input" id="magnet-${i}" value="${escapeHtml(t.magnet || '')}" readonly>
-                        <button class="copy-btn" id="btn-${i}" onclick="copyMagnet(${i})">Copy Magnet</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        async function copyMagnet(index) {
+        function loadMagnet(magnet) {
+            if (!magnet) {
+                showToast('Invalid magnet link.', 'error');
+                return;
+            }
+            document.getElementById('magnetInput').value = magnet;
+            switchTabDirect('stream');
+            
+            // Programmatically call addTorrent without event parameter
+            addTorrent(null);
+        }
+
+        async function copyMagnetText(index) {
             const input = document.getElementById('magnet-' + index);
             const btn = document.getElementById('btn-' + index);
             if (!input.value) return;
 
             try {
                 await navigator.clipboard.writeText(input.value);
+                showToast('Magnet link copied to clipboard!', 'success');
                 btn.textContent = 'Copied!';
-                btn.classList.add('copied');
+                btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                btn.style.color = 'var(--accent-green)';
                 setTimeout(() => {
-                    btn.textContent = 'Copy Magnet';
-                    btn.classList.remove('copied');
-                }, 1500);
+                    btn.textContent = '📋 Copy Magnet';
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 1800);
             } catch {
                 input.select();
                 document.execCommand('copy');
-                btn.textContent = 'Copied!';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.textContent = 'Copy Magnet';
-                    btn.classList.remove('copied');
-                }, 1500);
+                showToast('Copied to clipboard (fallback).', 'success');
             }
         }
 
+        // ==================== STREAM SECTION ====================
+        
+        async function loadActiveStreams() {
+            try {
+                const res = await fetch('/api/stream');
+                if (!res.ok) return;
+                const data = await res.json();
+                
+                const container = document.getElementById('activeStreamsContainer');
+                if (!data.torrents || data.torrents.length === 0) {
+                    container.innerHTML = `<div class="no-active-streams">No active streams on server</div>`;
+                    return;
+                }
+
+                container.innerHTML = data.torrents.map(t => {
+                    const isSelected = t.infoHash === currentInfoHash ? 'selected' : '';
+                    const progressPct = Math.round(t.progress * 100);
+                    const speed = formatBytes(t.downloadSpeed) + '/s';
+                    
+                    return `
+                        <div class="active-stream-item ${isSelected}" onclick="selectActiveTorrent('${t.infoHash}', '${escapeHtml(t.name)}')">
+                            <div class="active-stream-name" title="${escapeHtml(t.name)}">${escapeHtml(t.name)}</div>
+                            <div class="active-stream-stats">
+                                <span>📊 ${progressPct}%</span>
+                                <span>🌐 ${t.numPeers} peers</span>
+                                <span>⬇️ ${speed}</span>
+                            </div>
+                            <div class="active-stream-progress">
+                                <div class="active-stream-progress-fill" style="width: ${progressPct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Error fetching active streams:', err);
+            }
+        }
+
+        async function selectActiveTorrent(infoHash, name) {
+            if (statsInterval) clearInterval(statsInterval);
+            
+            currentInfoHash = infoHash;
+            currentMagnet = `magnet:?xt=urn:btih:${infoHash}`;
+            
+            document.getElementById('torrentDetailCard').style.display = 'block';
+            document.getElementById('torrentName').textContent = name;
+            
+            // Mark active stream item in list immediately
+            document.querySelectorAll('.active-stream-item').forEach(el => el.classList.remove('selected'));
+            loadActiveStreams(); // redraw lists
+
+            // Load files
+            try {
+                const filesRes = await fetch(`/api/stream/${infoHash}/files`);
+                if (!filesRes.ok) {
+                    showToast('Failed to load active torrent file lists', 'error');
+                    return;
+                }
+                const filesData = await filesRes.json();
+                
+                currentFiles = filesData.files;
+                renderFileList(filesData.files);
+                
+                // Show statistics
+                const pct = Math.round(filesData.progress * 100);
+                document.getElementById('torrentProgressText').textContent = pct + '%';
+                document.getElementById('progressBarFill').style.width = pct + '%';
+                document.getElementById('torrentPeers').textContent = filesData.numPeers || 0;
+                document.getElementById('torrentSpeed').textContent = formatBytes(filesData.downloadSpeed || 0) + '/s';
+                document.getElementById('torrentSize').textContent = formatBytes(filesData.length || 0);
+
+                startStatsPolling();
+            } catch (e) {
+                showToast('Error loading active stream detail.', 'error');
+            }
+        }
+
+        async function addTorrent(e) {
+            const magnet = document.getElementById('magnetInput').value.trim();
+            if (!magnet) {
+                showToast('Please enter a valid magnet link or select a torrent to stream', 'warning');
+                return;
+            }
+
+            // UI feedback
+            document.getElementById('torrentDetailCard').style.display = 'block';
+            document.getElementById('torrentName').textContent = 'Fetching torrent metadata... please wait';
+            
+            // Clear stats and lists
+            document.getElementById('torrentSize').textContent = '0 B';
+            document.getElementById('torrentPeers').textContent = '0';
+            document.getElementById('torrentSpeed').textContent = '0 B/s';
+            document.getElementById('torrentProgressText').textContent = '0%';
+            document.getElementById('progressBarFill').style.width = '0%';
+            document.getElementById('videoFilesSection').style.display = 'none';
+            document.getElementById('imageFilesSection').style.display = 'none';
+            document.getElementById('otherFilesSection').style.display = 'none';
+            
+            document.getElementById('playerCard').style.display = 'none';
+            document.getElementById('playerContainer').innerHTML = '';
+
+            const loadBtn = document.getElementById('loadBtn');
+            const originalBtnText = loadBtn.textContent;
+            loadBtn.disabled = true;
+            loadBtn.textContent = '⏳ Resolving Metadata...';
+
+            showToast('Contacting trackers & peers to resolve magnet metadata. This can take up to 60 seconds...', 'info');
+
+            try {
+                const res = await fetch('/api/stream/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ magnet })
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Failed to add torrent');
+                }
+
+                const data = await res.json();
+                
+                currentInfoHash = data.infoHash;
+                currentMagnet = magnet;
+                currentFiles = data.files;
+
+                document.getElementById('torrentName').textContent = data.name;
+                renderFileList(data.files);
+                
+                showToast('Torrent loaded successfully! Ready to stream.', 'success');
+                loadActiveStreams();
+                startStatsPolling();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('torrentDetailCard').style.display = 'none';
+                showToast(err.message || 'Error parsing magnet link.', 'error');
+            } finally {
+                loadBtn.disabled = false;
+                loadBtn.textContent = originalBtnText;
+            }
+        }
+
+        function renderFileList(files) {
+            const videos = files.filter(f => f.type === 'video');
+            const images = files.filter(f => f.type === 'image');
+            const others = files.filter(f => f.type === 'other');
+
+            // Render Video Section
+            const videoSect = document.getElementById('videoFilesSection');
+            if (videos.length > 0) {
+                videoSect.style.display = 'block';
+                document.getElementById('videoFilesList').innerHTML = videos.map(f => renderFileRow(f, 'video')).join('');
+            } else {
+                videoSect.style.display = 'none';
+            }
+
+            // Render Image Section
+            const imageSect = document.getElementById('imageFilesSection');
+            if (images.length > 0) {
+                imageSect.style.display = 'block';
+                document.getElementById('imageFilesList').innerHTML = images.map(f => renderFileRow(f, 'image')).join('');
+            } else {
+                imageSect.style.display = 'none';
+            }
+
+            // Render Others Section
+            const otherSect = document.getElementById('otherFilesSection');
+            if (others.length > 0) {
+                otherSect.style.display = 'block';
+                document.getElementById('otherFilesList').innerHTML = others.map(f => renderFileRow(f, 'other')).join('');
+            } else {
+                otherSect.style.display = 'none';
+            }
+        }
+
+        function renderFileRow(file, type) {
+            const icons = { video: '🎬', image: '🖼️', other: '📄' };
+            const isActive = activeFileIndex === file.index ? 'active' : '';
+            
+            // Build action buttons
+            let actions = '';
+            
+            // Stream URL for VLC / Player
+            const streamUrl = `${window.location.origin}/api/stream/${currentInfoHash}/stream/${file.index}`;
+            const downloadUrl = `${window.location.origin}/api/stream/${currentInfoHash}/file/${file.index}`;
+            
+            if (type === 'video') {
+                actions += `
+                    <button class="icon-btn play-btn" onclick="playFile(${file.index}, 'video')" title="Play in Browser">▶️</button>
+                    <button class="icon-btn vlc-btn" onclick="playInVLC('${streamUrl}')" title="Play in VLC Player">🧡</button>
+                    <button class="icon-btn" onclick="copyStreamUrl('${streamUrl}', this)" title="Copy Stream URL (for VLC/PotPlayer)">🔗</button>
+                `;
+            } else if (type === 'image') {
+                actions += `
+                    <button class="icon-btn play-btn" onclick="playFile(${file.index}, 'image')" title="View Image">👁️</button>
+                `;
+            }
+
+            // Always add direct download button
+            actions += `
+                <a href="${downloadUrl}" download="${escapeHtml(file.name)}" class="icon-btn" style="text-decoration:none;" title="Download File">📥</a>
+            `;
+
+            return `
+                <div class="file-row ${isActive}" id="file-row-${file.index}">
+                    <div class="file-main-info" onclick="triggerFileView(${file.index}, '${type}')">
+                        <span class="file-icon">${icons[type] || '📄'}</span>
+                        <div class="file-name-meta">
+                            <div class="file-name-text" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
+                            <div class="file-size-text">${formatBytes(file.size)}</div>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        ${actions}
+                    </div>
+                </div>
+            `;
+        }
+
+        function triggerFileView(index, type) {
+            if (type === 'video' || type === 'image') {
+                playFile(index, type);
+            } else {
+                // For other files, download directly
+                const downloadUrl = `${window.location.origin}/api/stream/${currentInfoHash}/file/${index}`;
+                window.open(downloadUrl, '_blank');
+            }
+        }
+
+        function detectVideoCompatibility(filename) {
+            const nameLower = filename.toLowerCase();
+            const extIdx = filename.lastIndexOf('.');
+            const ext = extIdx === -1 ? '' : filename.slice(extIdx).toLowerCase();
+            
+            const unsupportedContainers = ['.mkv', '.avi', '.flv', '.wmv', '.mov', '.mpg', '.mpeg', '.m4v', '.3gp'];
+            const unsupportedAudioKeywords = ['ac3', 'ac-3', 'dts', '5.1', '6ch', '7.1', 'eac3', 'dd5', 'dd+', 'truehd', 'atmos', 'dts-hd'];
+            
+            const containerIssue = unsupportedContainers.includes(ext);
+            const audioIssue = unsupportedAudioKeywords.some(keyword => nameLower.includes(keyword));
+            
+            let audioReason = null;
+            if (audioIssue) {
+                const found = unsupportedAudioKeywords.find(kw => nameLower.includes(kw));
+                audioReason = found.toUpperCase();
+                if (audioReason === '6CH' || audioReason === '5.1') audioReason = '5.1/6ch Surround';
+            }
+
+            return {
+                isCompatible: !containerIssue && !audioIssue,
+                containerIssue,
+                audioIssue,
+                ext,
+                audioReason
+            };
+        }
+
+        function playFile(fileIndex, type) {
+            activeFileIndex = fileIndex;
+            
+            // Update active state class in UI
+            document.querySelectorAll('.file-row').forEach(row => row.classList.remove('active'));
+            const currentRow = document.getElementById(`file-row-${fileIndex}`);
+            if (currentRow) currentRow.classList.add('active');
+
+            const file = currentFiles.find(f => f.index === fileIndex);
+            document.getElementById('playerTitle').textContent = file ? file.name : 'Now Playing';
+
+            const playerCard = document.getElementById('playerCard');
+            const container = document.getElementById('playerContainer');
+            playerCard.style.display = 'block';
+
+            const streamUrl = `/api/stream/${currentInfoHash}/stream/${fileIndex}`;
+            const downloadUrl = `/api/stream/${currentInfoHash}/file/${fileIndex}`;
+            const absoluteStreamUrl = `${window.location.origin}${streamUrl}`;
+
+            if (type === 'video') {
+                const compat = detectVideoCompatibility(file.name);
+                
+                if (!compat.isCompatible) {
+                    let issueTitle = 'Compatibility Warning';
+                    let issueDesc = 'This video might not play correctly in standard web browsers.';
+                    
+                    if (compat.containerIssue && compat.audioIssue) {
+                        issueTitle = `${compat.ext.toUpperCase().slice(1)} Video & ${compat.audioReason} Audio`;
+                        issueDesc = `Standard web browsers do not support the ${compat.ext.toUpperCase().slice(1)} container nor high-definition ${compat.audioReason} audio. If played in browser, the video will play silently or fail completely.`;
+                    } else if (compat.containerIssue) {
+                        issueTitle = `${compat.ext.toUpperCase().slice(1)} Video Container`;
+                        issueDesc = `Standard web browsers do not fully support the ${compat.ext.toUpperCase().slice(1)} format. The video may fail to play or have rendering issues.`;
+                    } else if (compat.audioIssue) {
+                        issueTitle = `${compat.audioReason} Audio Format`;
+                        issueDesc = `Standard web browsers (Chrome, Firefox, Safari) do not support the ${compat.audioReason} audio codec due to licensing. If played in the browser, the video will play without audio.`;
+                    }
+
+                    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    const vlcBtnText = isLocal ? '🧡 Launch VLC Player' : '🧡 Open in VLC';
+
+                    container.innerHTML = `
+                        <div class="unsupported-format" style="max-width: 550px; padding: 40px 30px; background: rgba(17, 24, 39, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                            <div class="unsupported-icon" style="color: var(--accent-cyan); text-shadow: 0 0 15px rgba(0, 212, 255, 0.3);">⚠️</div>
+                            <div class="unsupported-title" style="font-size: 1.25rem; font-family: 'Outfit', sans-serif; color: #fff; margin-bottom: 10px;">${issueTitle}</div>
+                            <div class="unsupported-desc" style="font-size: 0.85rem; line-height: 1.5; color: var(--text-secondary); margin-bottom: 24px;">
+                                ${issueDesc} We highly recommend using VLC Media Player or an external player for the best experience.
+                            </div>
+                            <div style="display:flex; flex-direction: column; gap: 10px; width: 100%;">
+                                <div style="display:flex; justify-content:center; gap: 10px; width: 100%;">
+                                    <button class="primary action-btn" style="flex: 1;" onclick="playInVLC('${absoluteStreamUrl}')">${vlcBtnText}</button>
+                                    <button class="secondary action-btn" style="flex: 1;" onclick="copyStreamUrl('${absoluteStreamUrl}', this)">📋 Copy Stream URL</button>
+                                </div>
+                                <p style="margin-top: 15px; font-size: 0.75rem; color: var(--text-secondary);">
+                                    Or try playing in browser anyway:
+                                </p>
+                                <button class="secondary action-btn" style="margin-top: 5px; width: 100%; border-color: rgba(255,255,255,0.08);" onclick="injectVideoTag('${streamUrl}')">📺 Play in Browser</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    injectVideoTag(streamUrl);
+                }
+            } else if (type === 'image') {
+                container.innerHTML = `<img src="/api/stream/${currentInfoHash}/file/${fileIndex}" class="image-display" alt="${escapeHtml(file.name)}">`;
+            }
+
+            playerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function injectVideoTag(src) {
+            const container = document.getElementById('playerContainer');
+            const file = currentFiles.find(f => f.index === activeFileIndex);
+            const nameLower = file ? file.name.toLowerCase() : '';
+            
+            let typeAttr = '';
+            if (nameLower.endsWith('.mp4') || nameLower.endsWith('.m4v')) {
+                typeAttr = 'type="video/mp4"';
+            } else if (nameLower.endsWith('.webm')) {
+                typeAttr = 'type="video/webm"';
+            } else if (nameLower.endsWith('.ogg') || nameLower.endsWith('.ogv')) {
+                typeAttr = 'type="video/ogg"';
+            }
+            
+            container.innerHTML = `
+                <video controls autoplay style="width: 100%; height: 100%; object-fit: contain;">
+                    <source src="${src}" ${typeAttr}>
+                    Your browser does not support the HTML5 video tag or video codec.
+                </video>
+            `;
+        }
+
+        function closePlayer() {
+            document.getElementById('playerCard').style.display = 'none';
+            document.getElementById('playerContainer').innerHTML = '';
+            activeFileIndex = null;
+            document.querySelectorAll('.file-row').forEach(row => row.classList.remove('active'));
+        }
+
+        async function playInVLC(url) {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            if (isLocal) {
+                // Try to extract infoHash and fileIndex to trigger local server launcher
+                const match = url.match(/\/api\/stream\/([a-f0-9]+)\/stream\/(\d+)/i);
+                if (match) {
+                    const infoHash = match[1];
+                    const fileIndex = match[2];
+                    
+                    showToast('Launching VLC Player locally...', 'info');
+                    try {
+                        const res = await fetch(`/api/stream/${infoHash}/play-vlc/${fileIndex}`, {
+                            method: 'POST'
+                        });
+                        if (res.ok) {
+                            showToast('VLC Player launched successfully!', 'success');
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Server-side VLC launch failed, falling back to protocol handler:', e);
+                    }
+                }
+            }
+
+            // Fallback: VLC protocol scheme handler
+            const vlcUrl = `vlc://${url.replace(/^https?:\/\//, '')}`;
+            window.location.href = vlcUrl;
+            
+            showToast('Sent stream to VLC Player!', 'success');
+            
+            // Also write vlc copy stream info
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Stream URL also copied to clipboard for manual VLC open.', 'info');
+            }).catch(()=>{});
+        }
+
+        function copyStreamUrl(url, btn) {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Stream link copied to clipboard! Paste it into VLC or PotPlayer.', 'success');
+                const prevText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = prevText, 1800);
+            }).catch(err => {
+                showToast('Failed to copy stream link.', 'error');
+            });
+        }
+
+        function startStatsPolling() {
+            if (statsInterval) clearInterval(statsInterval);
+            statsInterval = setInterval(async () => {
+                if (!currentInfoHash) return;
+                try {
+                    const res = await fetch(`/api/stream/${currentInfoHash}/stats`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    const pct = Math.round(data.progress * 100);
+                    document.getElementById('torrentProgressText').textContent = pct + '%';
+                    document.getElementById('progressBarFill').style.width = pct + '%';
+                    document.getElementById('torrentPeers').textContent = data.numPeers || 0;
+                    document.getElementById('torrentSpeed').textContent = formatBytes(data.downloadSpeed || 0) + '/s';
+                    document.getElementById('torrentSize').textContent = formatBytes(data.length || 0);
+
+                    // Update active streams sidebar card if visible
+                    loadActiveStreams();
+                } catch (e) {
+                    console.error('Stats polling failed:', e);
+                }
+            }, 3000);
+        }
+
+        async function removeTorrent() {
+            if (!currentInfoHash) return;
+            if (!confirm('Are you sure you want to stop streaming and remove this torrent from the server? This will free up server disk space.')) return;
+
+            try {
+                const res = await fetch(`/api/stream/${currentInfoHash}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Delete request failed');
+
+                showToast('Torrent removed from server successfully.', 'success');
+                
+                // Reset page view
+                if (statsInterval) clearInterval(statsInterval);
+                currentInfoHash = null;
+                currentMagnet = null;
+                currentFiles = [];
+                activeFileIndex = null;
+                
+                document.getElementById('torrentDetailCard').style.display = 'none';
+                document.getElementById('playerCard').style.display = 'none';
+                document.getElementById('playerContainer').innerHTML = '';
+                document.getElementById('magnetInput').value = '';
+                
+                loadActiveStreams();
+            } catch (e) {
+                showToast('Failed to remove torrent from server.', 'error');
+            }
+        }
+
+        function copyStreamMagnet() {
+            if (!currentMagnet) return;
+            navigator.clipboard.writeText(currentMagnet).then(() => {
+                showToast('Magnet link copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy magnet link.', 'error');
+            });
+        }
+
+        // ==================== UTILS ====================
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
     </script>
 </body>
