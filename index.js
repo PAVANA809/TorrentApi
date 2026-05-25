@@ -4,6 +4,7 @@ const cors = require('cors');
 const scrapeImdb = require('./ScrapeImdb.js');
 const fs = require('fs');
 const { exec } = require('child_process');
+const path = require('path');
 
 require("dotenv").config();
 
@@ -117,6 +118,59 @@ app.get('/search/:query', async (req, res) => {
 
     // Store active torrents info
     const activeTorrents = new Map();
+    const streamsFilePath = path.join(__dirname, 'active_streams.json');
+
+    function saveActiveStreamsToDisk() {
+        try {
+            const data = [];
+            for (const [infoHash, meta] of activeTorrents.entries()) {
+                const torrent = client.get(infoHash);
+                data.push({
+                    infoHash: infoHash,
+                    magnet: meta.magnet,
+                    addedAt: meta.addedAt,
+                    paused: torrent ? torrent.paused : false
+                });
+            }
+            fs.writeFileSync(streamsFilePath, JSON.stringify(data, null, 2), 'utf-8');
+            console.log(`[INFO] Saved ${data.length} active streams to disk.`);
+        } catch (err) {
+            console.error('[ERROR] Failed to save active streams:', err.message);
+        }
+    }
+
+    // Load persisted torrents from disk
+    async function loadActiveStreamsFromDisk() {
+        try {
+            if (fs.existsSync(streamsFilePath)) {
+                const raw = fs.readFileSync(streamsFilePath, 'utf-8');
+                const data = JSON.parse(raw);
+                console.log(`[INFO] Found ${data.length} persisted streams. Restoring...`);
+                for (const item of data) {
+                    try {
+                        console.log(`[INFO] Restoring torrent: ${item.infoHash}`);
+                        const torrent = client.add(item.magnet);
+                        
+                        activeTorrents.set(item.infoHash, {
+                            addedAt: item.addedAt || Date.now(),
+                            magnet: item.magnet
+                        });
+                        
+                        if (item.paused) {
+                            torrent.pause();
+                        }
+                    } catch (addErr) {
+                        console.error(`[ERROR] Failed to restore torrent ${item.infoHash}:`, addErr.message);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('[ERROR] Failed to load active streams:', err.message);
+        }
+    }
+
+    // Restore persisted streams immediately
+    await loadActiveStreamsFromDisk();
 
     const VIDEO_EXTS = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.flv', '.wmv', '.m4v', '.mpeg', '.mpg'];
     const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
@@ -169,12 +223,14 @@ app.get('/search/:query', async (req, res) => {
                         addedAt: Date.now(),
                         magnet: magnet
                     });
+                    saveActiveStreamsToDisk();
                 }
                 return res.json({
                     infoHash: existing.infoHash,
                     name: existing.name,
                     files: files,
                     progress: existing.progress,
+                    paused: existing.paused,
                     status: 'existing'
                 });
             }
@@ -220,12 +276,14 @@ app.get('/search/:query', async (req, res) => {
                 addedAt: Date.now(),
                 magnet: magnet
             });
+            saveActiveStreamsToDisk();
 
             res.json({
                 infoHash: torrent.infoHash,
                 name: torrent.name,
                 files: files,
                 progress: torrent.progress,
+                paused: torrent.paused,
                 status: 'added'
             });
         } catch (error) {
@@ -234,7 +292,7 @@ app.get('/search/:query', async (req, res) => {
                 // If it timed out or failed, make sure we clean it up so we don't leave dead torrents in client
                 const pendingTorrent = await client.get(magnet);
                 if (pendingTorrent) {
-                    await client.remove(pendingTorrent);
+                    await client.remove(pendingTorrent, { destroyStore: true });
                 }
             } catch (cleanupErr) {
                 console.error('[ERROR] Cleanup torrent failed:', cleanupErr.message);
@@ -258,6 +316,7 @@ app.get('/search/:query', async (req, res) => {
                     numPeers: torrent.numPeers,
                     length: torrent.length,
                     downloaded: torrent.downloaded,
+                    paused: torrent.paused,
                     addedAt: meta.addedAt
                 });
             } else {
@@ -289,7 +348,8 @@ app.get('/search/:query', async (req, res) => {
             progress: torrent.progress,
             downloadSpeed: torrent.downloadSpeed,
             uploadSpeed: torrent.uploadSpeed,
-            numPeers: torrent.numPeers
+            numPeers: torrent.numPeers,
+            paused: torrent.paused
         });
     });
 
@@ -378,9 +438,40 @@ app.get('/search/:query', async (req, res) => {
         }
         
         try {
-            await client.remove(req.params.infoHash);
+            await client.remove(req.params.infoHash, { destroyStore: true });
             activeTorrents.delete(req.params.infoHash);
+            saveActiveStreamsToDisk();
             res.json({ message: 'Torrent removed' });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // Pause torrent
+    app.post('/api/stream/:infoHash/pause', async (req, res) => {
+        const torrent = await client.get(req.params.infoHash);
+        if (!torrent) {
+            return res.status(404).json({ error: 'Torrent not found' });
+        }
+        try {
+            torrent.pause();
+            saveActiveStreamsToDisk();
+            res.json({ message: 'Torrent paused', paused: true });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // Resume torrent
+    app.post('/api/stream/:infoHash/resume', async (req, res) => {
+        const torrent = await client.get(req.params.infoHash);
+        if (!torrent) {
+            return res.status(404).json({ error: 'Torrent not found' });
+        }
+        try {
+            torrent.resume();
+            saveActiveStreamsToDisk();
+            res.json({ message: 'Torrent resumed', paused: false });
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
@@ -405,7 +496,8 @@ app.get('/search/:query', async (req, res) => {
             uploadSpeed: torrent.uploadSpeed,
             numPeers: torrent.numPeers,
             length: torrent.length,
-            downloaded: torrent.downloaded
+            downloaded: torrent.downloaded,
+            paused: torrent.paused
         });
     });
 

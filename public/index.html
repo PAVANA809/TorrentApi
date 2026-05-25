@@ -772,6 +772,14 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+
+        #floatingPlayerJumpBtn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 25px rgba(0, 212, 255, 0.5);
+        }
+        #floatingPlayerJumpBtn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
     </style>
 </head>
 <body>
@@ -803,6 +811,17 @@
                     <button class="primary" id="searchBtn" onclick="search()">🔍 Search</button>
                 </div>
             </div>
+            <!-- Sort controls for Search Results -->
+            <div id="search-sort-container" class="glass-card" style="margin-bottom: 16px; padding: 12px 20px; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <span style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500;">Sort Results:</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="tab-btn active" id="sort-btn-seeds" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 16px;" onclick="sortSearchResults('seeds')">🌱 Seeds</button>
+                    <button class="tab-btn" id="sort-btn-peers" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 16px;" onclick="sortSearchResults('peers')">🔻 Peers</button>
+                    <button class="tab-btn" id="sort-btn-size" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 16px;" onclick="sortSearchResults('size')">📦 Size</button>
+                    <button class="tab-btn" id="sort-btn-name" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 16px;" onclick="sortSearchResults('name')">🔤 Name</button>
+                </div>
+            </div>
+            
             <div id="results">
                 <div class="no-data">Use the search box above to find torrents from enabled providers.</div>
             </div>
@@ -862,9 +881,22 @@
                             </div>
                         </div>
 
-                        <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;">
                             <button class="danger action-btn" onclick="removeTorrent()">🗑️ Stop & Remove</button>
+                            <button class="secondary action-btn" id="pauseBtn" onclick="togglePauseTorrent()">⏸️ Stop</button>
                             <button class="secondary action-btn" onclick="copyStreamMagnet()">📋 Copy Magnet Link</button>
+                        </div>
+
+                        <!-- File Sorting Options -->
+                        <div id="file-sort-container" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px 16px; background: rgba(0, 0, 0, 0.2); border-radius: 10px; border: 1px solid rgba(255,255,255,0.03);">
+                            <span style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; font-weight: 500;">📂 Sort Files By:</span>
+                            <select id="fileSortSelect" onchange="sortFiles()" style="background: rgba(10, 15, 30, 0.9); color: #fff; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 6px 12px; font-size: 0.8rem; outline: none; cursor: pointer; font-family: inherit; transition: var(--transition-smooth);">
+                                <option value="default">Default Order</option>
+                                <option value="name-asc">Name (A-Z)</option>
+                                <option value="name-desc">Name (Z-A)</option>
+                                <option value="size-desc">Size (Large ➔ Small)</option>
+                                <option value="size-asc">Size (Small ➔ Large)</option>
+                            </select>
                         </div>
 
                         <!-- Video Files -->
@@ -911,6 +943,8 @@
         let activeStreamsInterval = null;
         let currentFiles = [];
         let activeFileIndex = null;
+        let searchResults = []; // Store search results globally for sorting
+        let isTorrentPaused = false; // Store pause state of current selected torrent
 
         // Custom Toast system
         function showToast(message, type = 'info') {
@@ -996,6 +1030,9 @@
                     <p>Searching providers for "${escapeHtml(query)}"...</p>
                 </div>
             `;
+            
+            // Hide sort controls on new search
+            document.getElementById('search-sort-container').style.display = 'none';
 
             try {
                 const res = await fetch('/search/' + encodeURIComponent(query));
@@ -1014,7 +1051,13 @@
                     return;
                 }
 
-                renderResults(data.data);
+                searchResults = data.data;
+                // Reset active sort button to Seeds
+                document.querySelectorAll('#search-sort-container .tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('sort-btn-seeds').classList.add('active');
+
+                renderResults(searchResults);
+                document.getElementById('search-sort-container').style.display = 'flex';
                 showToast(`Found ${data.data.length} results.`, 'success');
             } catch (err) {
                 console.error(err);
@@ -1104,18 +1147,19 @@
                 container.innerHTML = data.torrents.map(t => {
                     const isSelected = t.infoHash === currentInfoHash ? 'selected' : '';
                     const progressPct = Math.round(t.progress * 100);
-                    const speed = formatBytes(t.downloadSpeed) + '/s';
+                    const speed = t.paused ? 'Paused' : formatBytes(t.downloadSpeed) + '/s';
+                    const nameIcon = t.paused ? '⏸️ ' : '';
                     
                     return `
                         <div class="active-stream-item ${isSelected}" onclick="selectActiveTorrent('${t.infoHash}', '${escapeHtml(t.name)}')">
-                            <div class="active-stream-name" title="${escapeHtml(t.name)}">${escapeHtml(t.name)}</div>
+                            <div class="active-stream-name" title="${escapeHtml(t.name)}">${nameIcon}${escapeHtml(t.name)}</div>
                             <div class="active-stream-stats">
                                 <span>📊 ${progressPct}%</span>
                                 <span>🌐 ${t.numPeers} peers</span>
-                                <span>⬇️ ${speed}</span>
+                                <span style="${t.paused ? 'color: var(--accent-red); font-weight: 600;' : ''}">⬇️ ${speed}</span>
                             </div>
                             <div class="active-stream-progress">
-                                <div class="active-stream-progress-fill" style="width: ${progressPct}%"></div>
+                                <div class="active-stream-progress-fill" style="width: ${progressPct}%; ${t.paused ? 'background: var(--accent-red);' : ''}"></div>
                             </div>
                         </div>
                     `;
@@ -1148,7 +1192,6 @@
                 const filesData = await filesRes.json();
                 
                 currentFiles = filesData.files;
-                renderFileList(filesData.files);
                 
                 // Show statistics
                 const pct = Math.round(filesData.progress * 100);
@@ -1157,6 +1200,17 @@
                 document.getElementById('torrentPeers').textContent = filesData.numPeers || 0;
                 document.getElementById('torrentSpeed').textContent = formatBytes(filesData.downloadSpeed || 0) + '/s';
                 document.getElementById('torrentSize').textContent = formatBytes(filesData.length || 0);
+
+                // Set local pause state and UI
+                isTorrentPaused = !!filesData.paused;
+                updatePauseButtonUI();
+
+                // Reset file sort select to default and show sorting select
+                document.getElementById('fileSortSelect').value = 'default';
+                currentSortOrder = 'default';
+                document.getElementById('file-sort-container').style.display = 'flex';
+                
+                renderFileList(filesData.files);
 
                 startStatsPolling();
             } catch (e) {
@@ -1187,6 +1241,7 @@
             
             document.getElementById('playerCard').style.display = 'none';
             document.getElementById('playerContainer').innerHTML = '';
+            document.getElementById('file-sort-container').style.display = 'none';
 
             const loadBtn = document.getElementById('loadBtn');
             const originalBtnText = loadBtn.textContent;
@@ -1212,6 +1267,13 @@
                 currentInfoHash = data.infoHash;
                 currentMagnet = magnet;
                 currentFiles = data.files;
+                isTorrentPaused = !!data.paused;
+                updatePauseButtonUI();
+
+                // Reset file sort select to default and show sorting select
+                document.getElementById('fileSortSelect').value = 'default';
+                currentSortOrder = 'default';
+                document.getElementById('file-sort-container').style.display = 'flex';
 
                 document.getElementById('torrentName').textContent = data.name;
                 renderFileList(data.files);
@@ -1409,7 +1471,13 @@
                 container.innerHTML = `<img src="/api/stream/${currentInfoHash}/file/${fileIndex}" class="image-display" alt="${escapeHtml(file.name)}">`;
             }
 
-            playerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Show floating jump button
+            document.getElementById('floatingPlayerJumpBtn').style.display = 'flex';
+
+            // Smoothly scroll to the player card once layout is complete
+            setTimeout(() => {
+                playerCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         }
 
         function injectVideoTag(src) {
@@ -1439,6 +1507,8 @@
             document.getElementById('playerContainer').innerHTML = '';
             activeFileIndex = null;
             document.querySelectorAll('.file-row').forEach(row => row.classList.remove('active'));
+            // Hide floating jump button
+            document.getElementById('floatingPlayerJumpBtn').style.display = 'none';
         }
 
         async function playInVLC(url) {
@@ -1505,12 +1575,67 @@
                     document.getElementById('torrentSpeed').textContent = formatBytes(data.downloadSpeed || 0) + '/s';
                     document.getElementById('torrentSize').textContent = formatBytes(data.length || 0);
 
+                    // Update active pause state
+                    isTorrentPaused = !!data.paused;
+                    updatePauseButtonUI();
+
                     // Update active streams sidebar card if visible
                     loadActiveStreams();
                 } catch (e) {
                     console.error('Stats polling failed:', e);
                 }
             }, 3000);
+        }
+
+        function updatePauseButtonUI() {
+            const pauseBtn = document.getElementById('pauseBtn');
+            if (!pauseBtn) return;
+            
+            if (isTorrentPaused) {
+                pauseBtn.innerHTML = '▶️ Resume';
+                pauseBtn.className = 'primary action-btn';
+                pauseBtn.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.2)';
+                
+                document.getElementById('torrentSpeed').textContent = 'Paused';
+                document.getElementById('torrentSpeed').style.color = '#ef4444'; // Red
+            } else {
+                pauseBtn.innerHTML = '⏸️ Stop';
+                pauseBtn.className = 'secondary action-btn';
+                pauseBtn.style.boxShadow = '';
+                
+                document.getElementById('torrentSpeed').style.color = 'var(--accent-green)'; // Green
+            }
+        }
+
+        async function togglePauseTorrent() {
+            if (!currentInfoHash) return;
+            
+            const action = isTorrentPaused ? 'resume' : 'pause';
+            const btn = document.getElementById('pauseBtn');
+            
+            btn.disabled = true;
+            btn.textContent = isTorrentPaused ? '⏳ Resuming...' : '⏳ Stopping...';
+            
+            try {
+                const res = await fetch(`/api/stream/${currentInfoHash}/${action}`, {
+                    method: 'POST'
+                });
+                
+                if (!res.ok) {
+                    throw new Error(`Failed to ${action} torrent`);
+                }
+                
+                const data = await res.json();
+                isTorrentPaused = !!data.paused;
+                updatePauseButtonUI();
+                showToast(`Torrent ${action === 'pause' ? 'stopped' : 'resumed'} successfully.`, 'success');
+                
+                loadActiveStreams();
+            } catch (err) {
+                showToast(`Error trying to ${action} torrent: ` + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
         }
 
         async function removeTorrent() {
@@ -1529,11 +1654,13 @@
                 currentMagnet = null;
                 currentFiles = [];
                 activeFileIndex = null;
+                isTorrentPaused = false;
                 
                 document.getElementById('torrentDetailCard').style.display = 'none';
                 document.getElementById('playerCard').style.display = 'none';
                 document.getElementById('playerContainer').innerHTML = '';
                 document.getElementById('magnetInput').value = '';
+                document.getElementById('file-sort-container').style.display = 'none';
                 
                 loadActiveStreams();
             } catch (e) {
@@ -1548,6 +1675,66 @@
             }).catch(() => {
                 showToast('Failed to copy magnet link.', 'error');
             });
+        }
+
+        // ==================== SORTING UTILS ====================
+        function sortSearchResults(criteria) {
+            if (!searchResults || searchResults.length === 0) return;
+
+            // Set active class on sorting button
+            document.querySelectorAll('#search-sort-container .tab-btn').forEach(btn => {
+                if (btn.id === `sort-btn-${criteria}`) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            if (criteria === 'seeds') {
+                searchResults.sort((a, b) => (b.seeds || 0) - (a.seeds || 0));
+            } else if (criteria === 'peers') {
+                searchResults.sort((a, b) => (b.peers || 0) - (a.peers || 0));
+            } else if (criteria === 'size') {
+                searchResults.sort((a, b) => parseSizeToBytes(b.size) - parseSizeToBytes(a.size));
+            } else if (criteria === 'name') {
+                searchResults.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            }
+
+            renderResults(searchResults);
+        }
+
+        function parseSizeToBytes(sizeStr) {
+            if (!sizeStr || typeof sizeStr !== 'string') return 0;
+            const cleanStr = sizeStr.replace(/,/g, '').trim().toUpperCase();
+            const match = cleanStr.match(/^([\d.]+)\s*([A-Z]*)/);
+            if (!match) return 0;
+            const value = parseFloat(match[1]);
+            const unit = match[2];
+            const multipliers = {
+                'B': 1, 'KB': 1024, 'MB': 1024 * 1024, 'GB': 1024 * 1024 * 1024, 'TB': 1024 * 1024 * 1024 * 1024,
+                'K': 1024, 'M': 1024 * 1024, 'G': 1024 * 1024 * 1024, 'T': 1024 * 1024 * 1024 * 1024
+            };
+            return value * (multipliers[unit] || 1);
+        }
+
+        let currentSortOrder = 'default';
+        
+        function sortFiles() {
+            const select = document.getElementById('fileSortSelect');
+            currentSortOrder = select.value;
+            
+            let sorted = [...currentFiles];
+            if (currentSortOrder === 'name-asc') {
+                sorted.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (currentSortOrder === 'name-desc') {
+                sorted.sort((a, b) => b.name.localeCompare(a.name));
+            } else if (currentSortOrder === 'size-desc') {
+                sorted.sort((a, b) => b.size - a.size);
+            } else if (currentSortOrder === 'size-asc') {
+                sorted.sort((a, b) => a.size - b.size);
+            }
+            
+            renderFileList(sorted);
         }
 
         // ==================== UTILS ====================
@@ -1565,6 +1752,18 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
+
+        function scrollToPlayer() {
+            const playerCard = document.getElementById('playerCard');
+            if (playerCard) {
+                playerCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
     </script>
+    
+    <!-- Floating button to jump to player when playing -->
+    <button id="floatingPlayerJumpBtn" onclick="scrollToPlayer()" style="position: fixed; bottom: 20px; right: 20px; z-index: 999; display: none; background: var(--gradient-accent); color: #080b11; border-radius: 30px; padding: 12px 24px; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4); font-size: 0.9rem; font-weight: 700; align-items: center; gap: 8px; border: none; cursor: pointer; transition: var(--transition-smooth); font-family: 'Outfit', sans-serif;">
+        📺 Jump to Video
+    </button>
 </body>
 </html>
