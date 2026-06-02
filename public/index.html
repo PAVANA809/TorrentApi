@@ -733,7 +733,9 @@
             to { opacity: 0; transform: translateY(-10px); }
         }
 
-        /* Responsive */
+        /* ========== RESPONSIVE DESIGN ========== */
+
+        /* --- Tablet & small desktop (≤950px) --- */
         @media (max-width: 950px) {
             .stream-dashboard {
                 grid-template-columns: 1fr;
@@ -743,33 +745,350 @@
             }
         }
 
+        /* --- Mobile (≤600px) --- */
         @media (max-width: 600px) {
             body {
-                padding: 12px;
+                padding: 10px;
             }
+
+            /* Reduce ambient glow to avoid overflow */
+            .ambient-glow-1 {
+                width: 200px;
+                height: 200px;
+                filter: blur(100px);
+            }
+            .ambient-glow-2 {
+                width: 150px;
+                height: 150px;
+                filter: blur(80px);
+            }
+
+            /* Header */
+            h1 {
+                font-size: 1.6rem;
+                letter-spacing: -0.02em;
+            }
+            header p {
+                font-size: 0.85rem;
+            }
+            header {
+                margin-bottom: 18px;
+            }
+
+            /* Cards */
             .glass-card {
-                padding: 16px;
+                padding: 14px;
+                border-radius: 12px;
             }
+
+            /* Tab Switcher — horizontal scroll on tiny screens */
+            .tabs-container {
+                margin-bottom: 18px;
+            }
+            .tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .tabs::-webkit-scrollbar {
+                display: none;
+            }
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+
+            /* Search box */
             .search-box {
                 flex-direction: column;
+                gap: 10px;
             }
             .search-box button {
                 width: 100%;
             }
+            input[type="text"], textarea {
+                padding: 13px 14px;
+                font-size: 0.9rem;
+            }
+
+            /* Search sort buttons */
+            #search-sort-container {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 8px !important;
+                padding: 10px 14px !important;
+            }
+            #search-sort-container > div {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px !important;
+                width: 100%;
+            }
+
+            /* Torrent cards in search results */
             .torrent-card {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 12px;
+                gap: 10px;
             }
             .poster {
-                width: 60px;
-                height: 90px;
+                width: 55px;
+                height: 82px;
+            }
+            .torrent-title {
+                font-size: 0.95rem;
+                white-space: normal;
+                word-break: break-word;
+                -webkit-line-clamp: 2;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .torrent-meta {
+                gap: 8px;
+                font-size: 0.78rem;
             }
             .magnet-action-row {
                 width: 100%;
+                flex-wrap: wrap;
             }
+            .magnet-input {
+                width: 100%;
+                flex: unset;
+                min-width: 0;
+            }
+            .magnet-action-row button {
+                flex: 1;
+                min-width: 0;
+                font-size: 0.78rem;
+                padding: 8px 10px;
+            }
+
+            /* Buttons general */
+            button {
+                padding: 12px 18px;
+                font-size: 0.9rem;
+            }
+            button.action-btn {
+                padding: 7px 10px;
+                font-size: 0.8rem;
+            }
+
+            /* Stream dashboard sidebar */
+            .dashboard-sidebar h2,
+            .dashboard-main h3 {
+                font-size: 1.05rem !important;
+            }
+
+            /* Stats grid */
             .stats-grid {
                 grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .stat-item {
+                padding: 8px;
+            }
+            .stat-label {
+                font-size: 0.7rem;
+            }
+            .stat-val {
+                font-size: 0.85rem;
+            }
+
+            /* Action buttons row (Stop & Remove, etc.) */
+            .torrent-detail-card > div[style*="display: flex"] {
+                gap: 6px !important;
+            }
+
+            /* File sort container */
+            #file-sort-container {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 8px !important;
+            }
+
+            /* File rows */
+            .file-row {
+                padding: 8px 10px;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .file-main-info {
+                gap: 8px;
+                min-width: 0;
+                flex: 1 1 100%;
+            }
+            .file-name-text {
+                font-size: 0.8rem;
+                white-space: normal;
+                word-break: break-word;
+            }
+            .file-size-text {
+                font-size: 0.7rem;
+            }
+            .file-actions {
+                width: 100%;
+                justify-content: flex-start;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .icon-btn {
+                width: 34px;
+                height: 34px;
+                font-size: 0.9rem;
+            }
+
+            /* Player */
+            .player-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .player-header h4 {
+                font-size: 0.95rem;
+                margin-right: 0;
+                white-space: normal;
+                word-break: break-word;
+            }
+            .player-container {
+                border-radius: 8px;
+                aspect-ratio: auto;
+                overflow: visible;
+                min-height: 200px;
+            }
+
+            /* Unsupported format card */
+            .unsupported-format {
+                padding: 20px 16px !important;
+                max-width: 100% !important;
+            }
+            .unsupported-icon {
+                font-size: 2.2rem;
+            }
+            .unsupported-title {
+                font-size: 1rem !important;
+            }
+            .unsupported-desc {
+                font-size: 0.78rem !important;
+            }
+
+            /* Torrent detail card title */
+            .torrent-detail-card h3 {
+                font-size: 1.05rem;
+                word-break: break-word;
+            }
+
+            /* Progress bar */
+            .progress-bar-large {
+                height: 8px;
+            }
+
+            /* Toast notifications */
+            #toast-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                width: auto;
+            }
+            .toast {
+                font-size: 0.8rem;
+                padding: 10px 14px;
+            }
+
+            /* Floating jump button */
+            #floatingPlayerJumpBtn {
+                bottom: 14px !important;
+                right: 14px !important;
+                padding: 10px 18px !important;
+                font-size: 0.8rem !important;
+                border-radius: 24px !important;
+            }
+
+            /* Section headers */
+            .section-header {
+                font-size: 0.9rem;
+            }
+
+            /* Active stream items */
+            .active-stream-item {
+                padding: 10px;
+            }
+            .active-stream-name {
+                font-size: 0.82rem;
+                white-space: normal;
+                word-break: break-word;
+            }
+            .active-stream-stats {
+                font-size: 0.7rem;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            /* No data placeholder */
+            .no-data {
+                padding: 25px 16px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* --- Very small phones (≤380px) --- */
+        @media (max-width: 380px) {
+            h1 {
+                font-size: 1.35rem;
+            }
+            header p {
+                font-size: 0.78rem;
+            }
+            .tab-btn {
+                padding: 7px 12px;
+                font-size: 0.78rem;
+            }
+            .glass-card {
+                padding: 10px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .magnet-action-row button {
+                font-size: 0.72rem;
+                padding: 7px 8px;
+            }
+            .torrent-meta {
+                gap: 6px;
+                font-size: 0.72rem;
+            }
+            .icon-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Touch-friendly improvements for all mobile */
+        @media (hover: none) and (pointer: coarse) {
+            .tab-btn {
+                min-height: 42px;
+            }
+            .icon-btn {
+                min-width: 38px;
+                min-height: 38px;
+            }
+            button {
+                min-height: 42px;
+            }
+            button.action-btn {
+                min-height: 36px;
+            }
+            .active-stream-item {
+                min-height: 60px;
+            }
+            .file-row {
+                min-height: 52px;
             }
         }
 
