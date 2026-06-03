@@ -116,6 +116,18 @@ app.get('/search/:query', async (req, res) => {
     const { default: WebTorrent } = await import('webtorrent');
     const client = new WebTorrent();
 
+    // Resolve bundled FFmpeg/FFprobe binary paths (ffmpeg-static + @ffprobe-installer)
+    let FFMPEG_PATH = 'ffmpeg';
+    let FFPROBE_PATH = 'ffprobe';
+    try {
+        FFMPEG_PATH = require('ffmpeg-static');
+        console.log(`[INFO] Using bundled ffmpeg: ${FFMPEG_PATH}`);
+    } catch { console.warn('[WARN] ffmpeg-static not found, falling back to system ffmpeg'); }
+    try {
+        FFPROBE_PATH = require('@ffprobe-installer/ffprobe').path;
+        console.log(`[INFO] Using bundled ffprobe: ${FFPROBE_PATH}`);
+    } catch { console.warn('[WARN] @ffprobe-installer not found, falling back to system ffprobe'); }
+
     // Store active torrents info
     const activeTorrents = new Map();
     const streamsFilePath = path.join(__dirname, 'active_streams.json');
@@ -174,6 +186,7 @@ app.get('/search/:query', async (req, res) => {
 
     const VIDEO_EXTS = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.flv', '.wmv', '.m4v', '.mpeg', '.mpg'];
     const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
+    const SUBTITLE_EXTS = ['.srt', '.vtt', '.ass', '.ssa', '.sub'];
 
     function getExt(filename) {
         const idx = filename.lastIndexOf('.');
@@ -186,6 +199,81 @@ app.get('/search/:query', async (req, res) => {
 
     function isImage(filename) {
         return IMAGE_EXTS.includes(getExt(filename));
+    }
+
+    function isSubtitle(filename) {
+        return SUBTITLE_EXTS.includes(getExt(filename));
+    }
+
+    // Convert SRT/ASS/SSA subtitle text to WebVTT format for browser compatibility
+    function convertToVTT(text, ext) {
+        if (ext === '.vtt') return text; // already VTT
+
+        if (ext === '.srt') {
+            // SRT -> VTT conversion
+            let vtt = 'WEBVTT\n\n';
+            // Replace SRT timestamp format (00:00:00,000) with VTT (00:00:00.000)
+            const converted = text
+                .replace(/\r\n/g, '\n')
+                .replace(/\r/g, '\n')
+                .replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+            // Remove sequence numbers at start of cues
+            const cues = converted.split(/\n\n+/);
+            for (const cue of cues) {
+                const lines = cue.trim().split('\n');
+                if (lines.length === 0 || !lines[0]) continue;
+                // Skip pure numeric sequence number lines
+                const startIdx = /^\d+$/.test(lines[0]) ? 1 : 0;
+                const cuePart = lines.slice(startIdx).join('\n').trim();
+                if (cuePart) vtt += cuePart + '\n\n';
+            }
+            return vtt;
+        }
+
+        if (ext === '.ass' || ext === '.ssa') {
+            // Basic ASS/SSA -> VTT: extract dialogue lines only
+            let vtt = 'WEBVTT\n\n';
+            const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+            // Parse format header to find field indices
+            let formatFields = [];
+            for (const line of lines) {
+                if (line.startsWith('Format:')) {
+                    formatFields = line.replace('Format:', '').split(',').map(f => f.trim());
+                }
+                if (line.startsWith('Dialogue:')) {
+                    const values = line.replace('Dialogue:', '').split(',');
+                    const startIdx = formatFields.indexOf('Start');
+                    const endIdx = formatFields.indexOf('End');
+                    const textIdx = formatFields.indexOf('Text');
+                    if (startIdx < 0 || endIdx < 0 || textIdx < 0) continue;
+
+                    const start = values[startIdx]?.trim();
+                    const end = values[endIdx]?.trim();
+                    // Text may contain commas, rejoin from textIdx onward
+                    const rawText = values.slice(textIdx).join(',').trim()
+                        .replace(/\{[^}]*\}/g, '') // remove ASS tags
+                        .replace(/\\N/g, '\n')     // line breaks
+                        .replace(/\\n/g, '\n');
+
+                    if (!start || !end || !rawText) continue;
+
+                    // Convert ASS time 0:00:00.00 to VTT 00:00:00.000
+                    function assToVttTime(t) {
+                        const parts = t.split(':');
+                        if (parts.length !== 3) return t;
+                        const [h, m, s] = parts;
+                        const [sec, cs] = s.split('.');
+                        return `${h.padStart(2,'0')}:${m.padStart(2,'0')}:${sec.padStart(2,'0')}.${(cs||'00').padEnd(3,'0')}`;
+                    }
+
+                    vtt += `${assToVttTime(start)} --> ${assToVttTime(end)}\n${rawText}\n\n`;
+                }
+            }
+            return vtt;
+        }
+
+        // .sub (MicroDVD or plain text) — serve as-is with VTT header as best effort
+        return 'WEBVTT\n\n' + text;
     }
 
     function getMimeType(filename) {
@@ -215,7 +303,7 @@ app.get('/search/:query', async (req, res) => {
                     index: i,
                     name: f.name,
                     size: f.length,
-                    type: isVideo(f.name) ? 'video' : isImage(f.name) ? 'image' : 'other'
+                    type: isVideo(f.name) ? 'video' : isImage(f.name) ? 'image' : isSubtitle(f.name) ? 'subtitle' : 'other'
                 }));
                 // Make sure it is tracked in activeTorrents map
                 if (!activeTorrents.has(existing.infoHash)) {
@@ -269,7 +357,7 @@ app.get('/search/:query', async (req, res) => {
                 index: i,
                 name: f.name,
                 size: f.length,
-                type: isVideo(f.name) ? 'video' : isImage(f.name) ? 'image' : 'other'
+                type: isVideo(f.name) ? 'video' : isImage(f.name) ? 'image' : isSubtitle(f.name) ? 'subtitle' : 'other'
             }));
 
             activeTorrents.set(torrent.infoHash, {
@@ -338,7 +426,7 @@ app.get('/search/:query', async (req, res) => {
             index: i,
             name: f.name,
             size: f.length,
-            type: isVideo(f.name) ? 'video' : isImage(f.name) ? 'image' : 'other'
+            type: isVideo(f.name) ? 'video' : isImage(f.name) ? 'image' : isSubtitle(f.name) ? 'subtitle' : 'other'
         }));
 
         res.json({
@@ -405,7 +493,162 @@ app.get('/search/:query', async (req, res) => {
         });
     });
 
+    // Serve subtitle file as WebVTT (converts SRT/ASS on-the-fly)
+    app.get('/api/stream/:infoHash/subtitle/:fileIndex', async (req, res) => {
+        const torrent = await client.get(req.params.infoHash);
+        if (!torrent) {
+            return res.status(404).json({ error: 'Torrent not found' });
+        }
+
+        const fileIndex = parseInt(req.params.fileIndex);
+        const file = torrent.files[fileIndex];
+        if (!file) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        try {
+            const ext = getExt(file.name);
+            const chunks = [];
+            const stream = file.createReadStream();
+
+            stream.on('data', chunk => chunks.push(chunk));
+            stream.on('end', () => {
+                try {
+                    const rawText = Buffer.concat(chunks).toString('utf-8');
+                    const vttContent = convertToVTT(rawText, ext);
+                    res.setHeader('Content-Type', 'text/vtt; charset=utf-8');
+                    res.setHeader('Cache-Control', 'no-cache');
+                    res.send(vttContent);
+                } catch (convErr) {
+                    console.error('[SUBTITLE CONV ERROR]', convErr.message);
+                    res.status(500).json({ error: 'Failed to convert subtitle' });
+                }
+            });
+            stream.on('error', err => {
+                console.error('[SUBTITLE STREAM ERROR]', err.message);
+                res.status(500).json({ error: 'Subtitle stream error' });
+            });
+        } catch (err) {
+            console.error('[SUBTITLE ERROR]', err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // ---- FFmpeg helpers ----
+    const { spawn } = require('child_process');
+
+    // Probe embedded subtitle tracks in a video file using ffprobe
+    // GET /api/stream/:infoHash/probe-subs/:fileIndex
+    app.get('/api/stream/:infoHash/probe-subs/:fileIndex', async (req, res) => {
+        const torrent = await client.get(req.params.infoHash);
+        if (!torrent) return res.status(404).json({ error: 'Torrent not found' });
+
+        const fileIndex = parseInt(req.params.fileIndex);
+        const file = torrent.files[fileIndex];
+        if (!file) return res.status(404).json({ error: 'File not found' });
+
+        const port = process.env.PORT || 3000;
+        const streamUrl = `http://127.0.0.1:${port}/api/stream/${torrent.infoHash}/stream/${fileIndex}`;
+
+        try {
+            const result = await new Promise((resolve, reject) => {
+                const args = [
+                    '-v', 'quiet',
+                    '-print_format', 'json',
+                    '-show_streams',
+                    '-select_streams', 's',   // only subtitle streams
+                    '-i', streamUrl
+                ];
+                const proc = spawn(FFPROBE_PATH, args);
+                let stdout = '';
+                let stderr = '';
+                proc.stdout.on('data', d => stdout += d);
+                proc.stderr.on('data', d => stderr += d);
+                proc.on('close', code => {
+                    if (stdout) {
+                        try { resolve(JSON.parse(stdout)); }
+                        catch (e) { reject(new Error('ffprobe JSON parse error')); }
+                    } else {
+                        reject(new Error(`ffprobe exited (${code}): ${stderr.slice(0, 200)}`));
+                    }
+                });
+                proc.on('error', err => reject(new Error('ffprobe not found: ' + err.message)));
+                // Timeout safety
+                setTimeout(() => { proc.kill(); reject(new Error('ffprobe timeout')); }, 30000);
+            });
+
+            // Build a clean list of subtitle tracks
+            const tracks = (result.streams || []).map((s, i) => {
+                const lang = s.tags?.language || s.tags?.LANGUAGE || null;
+                const title = s.tags?.title || s.tags?.TITLE || null;
+                const codec = s.codec_name || 'unknown';
+                const label = [title, lang ? `[${lang}]` : null].filter(Boolean).join(' ') || `Track ${s.index}`;
+                return {
+                    trackIndex: i,          // subtitle-stream index (0-based among subtitle streams)
+                    streamIndex: s.index,   // absolute stream index in file
+                    label,
+                    lang,
+                    title,
+                    codec
+                };
+            });
+
+            res.json({ tracks });
+        } catch (err) {
+            console.error('[PROBE-SUBS ERROR]', err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // Extract an embedded subtitle track as WebVTT via ffmpeg
+    // GET /api/stream/:infoHash/embedded-sub/:fileIndex/:trackIndex
+    app.get('/api/stream/:infoHash/embedded-sub/:fileIndex/:trackIndex', async (req, res) => {
+        const torrent = await client.get(req.params.infoHash);
+        if (!torrent) return res.status(404).json({ error: 'Torrent not found' });
+
+        const fileIndex = parseInt(req.params.fileIndex);
+        const trackIndex = parseInt(req.params.trackIndex); // subtitle-stream index (0-based)
+        const file = torrent.files[fileIndex];
+        if (!file) return res.status(404).json({ error: 'File not found' });
+
+        const port = process.env.PORT || 3000;
+        const streamUrl = `http://127.0.0.1:${port}/api/stream/${torrent.infoHash}/stream/${fileIndex}`;
+
+        res.setHeader('Content-Type', 'text/vtt; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache');
+
+        // ffmpeg: read the stream URL, pick subtitle stream s:trackIndex, output as webvtt to stdout
+        const args = [
+            '-v', 'error',
+            '-i', streamUrl,
+            '-map', `0:s:${trackIndex}`,
+            '-f', 'webvtt',
+            'pipe:1'
+        ];
+
+        console.log(`[EMBEDDED-SUB] ffmpeg -map 0:s:${trackIndex} (track ${trackIndex})`);
+        const proc = spawn(FFMPEG_PATH, args);
+
+        proc.stdout.pipe(res);
+
+        proc.stderr.on('data', d => {
+            console.error('[FFMPEG SUBTITLE STDERR]', d.toString().slice(0, 200));
+        });
+
+        proc.on('error', err => {
+            console.error('[FFMPEG ERROR]', err.message);
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'ffmpeg not found or failed: ' + err.message });
+            }
+        });
+
+        res.on('close', () => {
+            proc.kill('SIGKILL');
+        });
+    });
+
     // Serve image or other file
+
     app.get('/api/stream/:infoHash/file/:fileIndex', async (req, res) => {
         const torrent = await client.get(req.params.infoHash);
         if (!torrent) {

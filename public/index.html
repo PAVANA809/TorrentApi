@@ -560,6 +560,339 @@
             color: #f97316;
             border-color: #f97316;
         }
+        .icon-btn.sub-btn:hover {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+            border-color: var(--accent-purple);
+        }
+
+        /* ===== NETFLIX-STYLE SUBTITLE PANEL ===== */
+        .nf-subtitle-panel {
+            margin-top: 12px;
+            background: rgba(10, 10, 18, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+        }
+
+        /* Header bar */
+        .nf-sub-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.02);
+        }
+        .nf-sub-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nf-sub-header-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.01em;
+        }
+        .nf-sub-active-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #e50914;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+            display: none;
+        }
+        .nf-sub-active-badge.visible { display: inline-block; }
+        .nf-sub-off-btn {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #aaa;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.03em;
+        }
+        .nf-sub-off-btn:hover {
+            background: rgba(229,9,20,0.15);
+            border-color: rgba(229,9,20,0.4);
+            color: #ff6b6b;
+        }
+
+        /* Source tabs (From Torrent / Upload / URL) */
+        .nf-sub-sources {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .nf-sub-src-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: rgba(255,255,255,0.45);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 10px 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.02em;
+            text-align: center;
+        }
+        .nf-sub-src-btn:hover { color: rgba(255,255,255,0.8); }
+        .nf-sub-src-btn.active {
+            color: #fff;
+            border-bottom-color: #e50914;
+        }
+        .nf-sub-src-pane { display: none; }
+        .nf-sub-src-pane.active { display: block; }
+
+        /* Track list */
+        .nf-sub-list {
+            padding: 8px 0;
+            max-height: 260px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+        .nf-sub-list::-webkit-scrollbar { width: 4px; }
+        .nf-sub-list::-webkit-scrollbar-track { background: transparent; }
+        .nf-sub-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+        .nf-sub-section-label {
+            padding: 6px 20px 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+        }
+        .nf-sub-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.05);
+            margin: 6px 0;
+        }
+        .nf-track-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            position: relative;
+        }
+        .nf-track-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .nf-track-item.active {
+            background: rgba(229,9,20,0.08);
+        }
+        .nf-track-check {
+            width: 16px;
+            flex-shrink: 0;
+            color: #e50914;
+            font-size: 0.85rem;
+            font-weight: 700;
+            opacity: 0;
+        }
+        .nf-track-item.active .nf-track-check { opacity: 1; }
+        .nf-track-name {
+            flex: 1;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.85);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .nf-track-item.active .nf-track-name { color: #fff; font-weight: 600; }
+        .nf-track-lang {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.3);
+            font-weight: 500;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .nf-sub-empty {
+            padding: 18px 20px;
+            font-size: 0.84rem;
+            color: rgba(255,255,255,0.35);
+            text-align: center;
+        }
+        .nf-sub-loading {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.82rem;
+        }
+        .nf-mini-spinner {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-left-color: #e50914;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        /* Upload & URL panes */
+        .nf-upload-zone {
+            margin: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            border: 1.5px dashed rgba(255,255,255,0.12);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255,255,255,0.02);
+        }
+        .nf-upload-zone:hover {
+            border-color: rgba(229,9,20,0.4);
+            background: rgba(229,9,20,0.04);
+        }
+        .nf-upload-icon { font-size: 1.8rem; }
+        .nf-upload-text { font-size: 0.82rem; color: rgba(255,255,255,0.55); text-align: center; }
+        .nf-upload-sub { font-size: 0.72rem; color: rgba(255,255,255,0.3); }
+        .nf-upload-status {
+            margin: 0 16px 12px;
+            font-size: 0.78rem;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: none;
+        }
+        .nf-upload-status.ok { background: rgba(16,185,129,0.1); color: #34d399; display: block; }
+        .nf-upload-status.err { background: rgba(239,68,68,0.1); color: #f87171; display: block; }
+
+        .nf-url-row {
+            display: flex;
+            gap: 8px;
+            margin: 12px 16px 4px;
+        }
+        .nf-url-row input[type="text"] {
+            padding: 9px 12px;
+            font-size: 0.82rem;
+            border-radius: 8px;
+            flex: 1;
+        }
+        .nf-url-row button {
+            padding: 9px 16px;
+            font-size: 0.82rem;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        .nf-url-hint {
+            margin: 4px 16px 12px;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        /* ─── Appearance Section ─── */
+        .nf-appearance-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+        .nf-appearance-toggle:hover { background: rgba(255,255,255,0.03); }
+        .nf-appearance-toggle-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.7);
+        }
+        .nf-chevron {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.4);
+            transition: transform 0.25s ease;
+        }
+        .nf-chevron.open { transform: rotate(180deg); }
+
+        .nf-appearance-body {
+            padding: 14px 20px 18px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .nf-appearance-body.open { display: flex; }
+
+        .nf-ap-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .nf-ap-label {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            font-weight: 500;
+            flex-shrink: 0;
+            min-width: 90px;
+        }
+        .nf-ap-controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+        /* Pill option buttons */
+        .nf-option {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            letter-spacing: 0.02em;
+        }
+        .nf-option:hover {
+            border-color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.85);
+        }
+        .nf-option.active {
+            background: #e50914;
+            border-color: #e50914;
+            color: #fff;
+        }
+
+        /* Color swatches */
+        .nf-color-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            outline: none;
+            flex-shrink: 0;
+        }
+        .nf-color-swatch:hover { transform: scale(1.15); }
+        .nf-color-swatch.active {
+            border-color: #fff;
+            box-shadow: 0 0 0 2px #e50914;
+        }
 
         /* Player panel */
         .player-card {
@@ -1246,6 +1579,118 @@
                         <div class="player-container" id="playerContainer">
                             <!-- Injected dynamically -->
                         </div>
+                        <!-- Subtitle Panel (Netflix-style) -->
+                        <div id="subtitlePanel" style="display:none;">
+                            <div class="nf-subtitle-panel">
+                                <!-- Header -->
+                                <div class="nf-sub-header">
+                                    <div class="nf-sub-header-left">
+                                        <span style="font-size:1.1rem;">💬</span>
+                                        <span class="nf-sub-header-title">Subtitles</span>
+                                        <span class="nf-sub-active-badge" id="nfSubActiveBadge">ON</span>
+                                    </div>
+                                    <button class="nf-sub-off-btn" onclick="disableSubtitles()">Turn Off</button>
+                                </div>
+
+                                <!-- Source tabs -->
+                                <div class="nf-sub-sources">
+                                    <button class="nf-sub-src-btn active" onclick="switchSubTab('torrent')">From Video</button>
+                                    <button class="nf-sub-src-btn" onclick="switchSubTab('upload')">Upload File</button>
+                                    <button class="nf-sub-src-btn" onclick="switchSubTab('url')">From URL</button>
+                                </div>
+
+                                <!-- Torrent / embedded pane -->
+                                <div class="nf-sub-src-pane active" id="subpane-torrent">
+                                    <div class="nf-sub-list" id="torrentSubtitleList">
+                                        <div class="nf-sub-loading">
+                                            <div class="nf-mini-spinner"></div>
+                                            Detecting subtitle tracks...
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Upload pane -->
+                                <div class="nf-sub-src-pane" id="subpane-upload">
+                                    <label class="nf-upload-zone" for="subtitleFileInput">
+                                        <div class="nf-upload-icon">📂</div>
+                                        <div class="nf-upload-text">Click to choose a subtitle file</div>
+                                        <div class="nf-upload-sub">.srt &nbsp;·&nbsp; .vtt &nbsp;·&nbsp; .ass &nbsp;·&nbsp; .ssa</div>
+                                    </label>
+                                    <input type="file" id="subtitleFileInput" accept=".srt,.vtt,.ass,.ssa,.sub" style="display:none;" onchange="loadLocalSubtitle(this)">
+                                    <div id="localSubtitleStatus" class="nf-upload-status"></div>
+                                </div>
+
+                                <!-- URL pane -->
+                                <div class="nf-sub-src-pane" id="subpane-url">
+                                    <div class="nf-url-row">
+                                        <input type="text" id="subtitleUrlInput" placeholder="https://example.com/subtitle.vtt">
+                                        <button class="primary" onclick="loadSubtitleFromUrl()">Load</button>
+                                    </div>
+                                    <p class="nf-url-hint">URL must be on the same server or allow CORS.</p>
+                                </div>
+
+                                <!-- Appearance Section -->
+                                <div class="nf-appearance-toggle" onclick="toggleAppearancePanel()">
+                                    <div class="nf-appearance-toggle-left">
+                                        <span>🎨</span>
+                                        <span>Subtitle Appearance</span>
+                                    </div>
+                                    <span class="nf-chevron" id="nfChevron">▼</span>
+                                </div>
+                                <div class="nf-appearance-body" id="nfAppearanceBody">
+                                    <!-- Font Size -->
+                                    <div class="nf-ap-row">
+                                        <span class="nf-ap-label">Font Size</span>
+                                        <div class="nf-ap-controls">
+                                            <button class="nf-option" onclick="setSubStyle('size','75%')">S</button>
+                                            <button class="nf-option active" onclick="setSubStyle('size','100%')">M</button>
+                                            <button class="nf-option" onclick="setSubStyle('size','150%')">L</button>
+                                            <button class="nf-option" onclick="setSubStyle('size','200%')">XL</button>
+                                        </div>
+                                    </div>
+                                    <!-- Font Color -->
+                                    <div class="nf-ap-row">
+                                        <span class="nf-ap-label">Font Color</span>
+                                        <div class="nf-ap-controls">
+                                            <button class="nf-color-swatch active" style="background:#ffffff" onclick="setSubStyle('color','#ffffff')" title="White"></button>
+                                            <button class="nf-color-swatch" style="background:#fde047" onclick="setSubStyle('color','#fde047')" title="Yellow"></button>
+                                            <button class="nf-color-swatch" style="background:#86efac" onclick="setSubStyle('color','#86efac')" title="Green"></button>
+                                            <button class="nf-color-swatch" style="background:#67e8f9" onclick="setSubStyle('color','#67e8f9')" title="Cyan"></button>
+                                            <button class="nf-color-swatch" style="background:#93c5fd" onclick="setSubStyle('color','#93c5fd')" title="Blue"></button>
+                                            <button class="nf-color-swatch" style="background:#f9a8d4" onclick="setSubStyle('color','#f9a8d4')" title="Pink"></button>
+                                        </div>
+                                    </div>
+                                    <!-- Text Style -->
+                                    <div class="nf-ap-row">
+                                        <span class="nf-ap-label">Text Style</span>
+                                        <div class="nf-ap-controls">
+                                            <button class="nf-option" onclick="setSubStyle('textStyle','none')">None</button>
+                                            <button class="nf-option active" onclick="setSubStyle('textStyle','shadow')">Shadow</button>
+                                            <button class="nf-option" onclick="setSubStyle('textStyle','outline')">Outline</button>
+                                            <button class="nf-option" onclick="setSubStyle('textStyle','raised')">Raised</button>
+                                        </div>
+                                    </div>
+                                    <!-- Background -->
+                                    <div class="nf-ap-row">
+                                        <span class="nf-ap-label">Background</span>
+                                        <div class="nf-ap-controls">
+                                            <button class="nf-option" onclick="setSubStyle('bg','none')">None</button>
+                                            <button class="nf-option active" onclick="setSubStyle('bg','semi')">Dark</button>
+                                            <button class="nf-option" onclick="setSubStyle('bg','solid')">Black</button>
+                                        </div>
+                                    </div>
+                                    <!-- Font Family -->
+                                    <div class="nf-ap-row">
+                                        <span class="nf-ap-label">Font</span>
+                                        <div class="nf-ap-controls">
+                                            <button class="nf-option active" onclick="setSubStyle('font','Inter, sans-serif')">Sans</button>
+                                            <button class="nf-option" onclick="setSubStyle('font','Georgia, serif')">Serif</button>
+                                            <button class="nf-option" onclick="setSubStyle('font','monospace')">Mono</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -1264,6 +1709,7 @@
         let activeFileIndex = null;
         let searchResults = []; // Store search results globally for sorting
         let isTorrentPaused = false; // Store pause state of current selected torrent
+        let currentSubtitleUrl = null; // Track active subtitle URL (blob or server)
 
         // Custom Toast system
         function showToast(message, type = 'info') {
@@ -1613,7 +2059,8 @@
         function renderFileList(files) {
             const videos = files.filter(f => f.type === 'video');
             const images = files.filter(f => f.type === 'image');
-            const others = files.filter(f => f.type === 'other');
+            const subtitles = files.filter(f => f.type === 'subtitle');
+            const others = files.filter(f => f.type !== 'video' && f.type !== 'image' && f.type !== 'subtitle');
 
             // Render Video Section
             const videoSect = document.getElementById('videoFilesSection');
@@ -1641,10 +2088,13 @@
             } else {
                 otherSect.style.display = 'none';
             }
+
+            // Populate subtitle list for the subtitle panel
+            populateTorrentSubtitleList(subtitles);
         }
 
         function renderFileRow(file, type) {
-            const icons = { video: '🎬', image: '🖼️', other: '📄' };
+            const icons = { video: '🎬', image: '🖼️', subtitle: '🗒️', other: '📄' };
             const isActive = activeFileIndex === file.index ? 'active' : '';
             
             // Build action buttons
@@ -1786,6 +2236,10 @@
                 } else {
                     injectVideoTag(streamUrl);
                 }
+
+                // Probe embedded subtitle tracks in background regardless of compatibility
+                probeEmbeddedSubtitles(fileIndex);
+
             } else if (type === 'image') {
                 container.innerHTML = `<img src="/api/stream/${currentInfoHash}/file/${fileIndex}" class="image-display" alt="${escapeHtml(file.name)}">`;
             }
@@ -1814,17 +2268,31 @@
             }
             
             container.innerHTML = `
-                <video controls autoplay style="width: 100%; height: 100%; object-fit: contain;">
+                <video controls autoplay style="width: 100%; height: 100%; object-fit: contain;" id="mainVideoPlayer">
                     <source src="${src}" ${typeAttr}>
                     Your browser does not support the HTML5 video tag or video codec.
                 </video>
             `;
+
+            // Re-apply active subtitle if one was set
+            if (currentSubtitleUrl) {
+                addSubtitleTrack(currentSubtitleUrl);
+            }
+
+            // Show subtitle panel
+            document.getElementById('subtitlePanel').style.display = 'block';
         }
 
         function closePlayer() {
             document.getElementById('playerCard').style.display = 'none';
             document.getElementById('playerContainer').innerHTML = '';
+            document.getElementById('subtitlePanel').style.display = 'none';
             activeFileIndex = null;
+            // Revoke any blob subtitle URLs to free memory
+            if (currentSubtitleUrl && currentSubtitleUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(currentSubtitleUrl);
+            }
+            currentSubtitleUrl = null;
             document.querySelectorAll('.file-row').forEach(row => row.classList.remove('active'));
             // Hide floating jump button
             document.getElementById('floatingPlayerJumpBtn').style.display = 'none';
@@ -1996,7 +2464,319 @@
             });
         }
 
-        // ==================== SORTING UTILS ====================
+        // ==================== SUBTITLE MANAGEMENT ====================
+
+        // ISO 639 language code → full name map
+        const LANG_NAMES = {
+            'ara':'Arabic','ces':'Czech','cze':'Czech','dan':'Danish','deu':'German','ger':'German',
+            'ell':'Greek','gre':'Greek','eng':'English','spa':'Spanish','fin':'Finnish','fil':'Filipino',
+            'fra':'French','fre':'French','heb':'Hebrew','hin':'Hindi','hun':'Hungarian','ind':'Indonesian',
+            'ita':'Italian','jpn':'Japanese','kan':'Kannada','kor':'Korean','mal':'Malayalam','msa':'Malay',
+            'may':'Malay','nld':'Dutch','dut':'Dutch','nor':'Norwegian','pol':'Polish','por':'Portuguese',
+            'swe':'Swedish','tam':'Tamil','tel':'Telugu','tha':'Thai','tur':'Turkish','vie':'Vietnamese',
+            'zho':'Chinese','chi':'Chinese','rus':'Russian','ukr':'Ukrainian','ron':'Romanian','rum':'Romanian',
+            'hrv':'Croatian','srp':'Serbian','slk':'Slovak','slo':'Slovak','slv':'Slovenian','bul':'Bulgarian',
+            'lit':'Lithuanian','lav':'Latvian','est':'Estonian','mkd':'Macedonian','alb':'Albanian','sqi':'Albanian',
+            'cat':'Catalan','nob':'Norwegian Bokmål','nno':'Norwegian Nynorsk','aze':'Azerbaijani',
+            'ben':'Bengali','fas':'Persian','per':'Persian','urd':'Urdu','pus':'Pashto','swa':'Swahili',
+            'msa':'Malay','glg':'Galician','eus':'Basque','baq':'Basque'
+        };
+
+        function langName(code) {
+            if (!code) return null;
+            const c = code.toLowerCase().trim();
+            return LANG_NAMES[c] || null;
+        }
+
+        // Subtitle appearance state
+        const subStyle = {
+            size: '100%',
+            color: '#ffffff',
+            textStyle: 'shadow',
+            bg: 'semi',
+            font: 'Inter, sans-serif'
+        };
+
+        function buildCueCSS() {
+            let textShadow = 'none';
+            if (subStyle.textStyle === 'shadow') textShadow = '1px 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7)';
+            else if (subStyle.textStyle === 'outline') textShadow = '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000';
+            else if (subStyle.textStyle === 'raised') textShadow = '1px 1px 0 #000, 2px 2px 0 rgba(0,0,0,0.5)';
+
+            let bg = 'transparent';
+            if (subStyle.bg === 'semi') bg = 'rgba(0,0,0,0.65)';
+            else if (subStyle.bg === 'solid') bg = '#000000';
+
+            return `
+                ::cue {
+                    font-size: ${subStyle.size};
+                    color: ${subStyle.color};
+                    background: ${bg};
+                    font-family: ${subStyle.font};
+                    text-shadow: ${textShadow};
+                    line-height: 1.4;
+                }
+            `;
+        }
+
+        function applySubtitleStyles() {
+            let styleTag = document.getElementById('cue-style-tag');
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'cue-style-tag';
+                document.head.appendChild(styleTag);
+            }
+            styleTag.textContent = buildCueCSS();
+        }
+
+        function setSubStyle(key, value) {
+            subStyle[key] = value;
+
+            // Update active state on the button that was clicked
+            // Find sibling buttons in the same nf-ap-controls group
+            if (key === 'color') {
+                document.querySelectorAll('.nf-color-swatch').forEach(btn => {
+                    btn.classList.toggle('active', btn.title.toLowerCase() === getColorName(value));
+                });
+            } else {
+                // For nf-option pills, find the group by matching the value
+                document.querySelectorAll('.nf-option').forEach(btn => {
+                    const row = btn.closest('.nf-ap-row');
+                    if (!row) return;
+                    if (btn.textContent.trim() === pillLabel(key, value) || btn.getAttribute('onclick') === `setSubStyle('${key}','${value}')`) {
+                        btn.classList.add('active');
+                    } else if (row.querySelector(`[onclick="setSubStyle('${key}','${value}')"]`)) {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            applySubtitleStyles();
+        }
+
+        function getColorName(hex) {
+            const map = { '#ffffff': 'white', '#fde047': 'yellow', '#86efac': 'green', '#67e8f9': 'cyan', '#93c5fd': 'blue', '#f9a8d4': 'pink' };
+            return map[hex] || hex;
+        }
+        function pillLabel(key, value) {
+            const pills = {
+                size: { '75%': 'S', '100%': 'M', '150%': 'L', '200%': 'XL' },
+                textStyle: { 'none': 'None', 'shadow': 'Shadow', 'outline': 'Outline', 'raised': 'Raised' },
+                bg: { 'none': 'None', 'semi': 'Dark', 'solid': 'Black' },
+                font: { 'Inter, sans-serif': 'Sans', 'Georgia, serif': 'Serif', 'monospace': 'Mono' }
+            };
+            return (pills[key] || {})[value] || value;
+        }
+
+        function toggleAppearancePanel() {
+            const body = document.getElementById('nfAppearanceBody');
+            const chevron = document.getElementById('nfChevron');
+            const isOpen = body.classList.toggle('open');
+            chevron.classList.toggle('open', isOpen);
+        }
+
+        function populateTorrentSubtitleList(subtitleFiles) {
+            window._torrentSubtitleFiles = subtitleFiles || [];
+            renderSubtitlePanel(window._torrentSubtitleFiles, window._embeddedSubtitleTracks || []);
+        }
+
+        function renderSubtitlePanel(fileSubtitles, embeddedTracks) {
+            const listEl = document.getElementById('torrentSubtitleList');
+            let html = '';
+
+            // Embedded tracks section
+            if (embeddedTracks && embeddedTracks.length > 0) {
+                html += `<div class="nf-sub-section-label">Embedded in Video</div>`;
+                html += embeddedTracks.map(t => {
+                    const name = langName(t.lang) || t.title || `Track ${t.trackIndex + 1}`;
+                    const sdh = t.title && /SDH|CC|Hearing/i.test(t.title) ? ' <span style="font-size:0.65rem;color:rgba(255,255,255,0.3);">[SDH]</span>' : '';
+                    const langCode = (t.lang || t.codec || '').toUpperCase().slice(0, 4);
+                    return `
+                        <div class="nf-track-item" id="sub-emb-${t.trackIndex}" onclick="selectEmbeddedSubtitle(${t.trackIndex}, '${escapeHtml(name)}')" title="${escapeHtml(t.label)} (${t.codec})">
+                            <span class="nf-track-check">✓</span>
+                            <span class="nf-track-name">${escapeHtml(name)}${sdh}</span>
+                            <span class="nf-track-lang">${langCode}</span>
+                        </div>`;
+                }).join('');
+            }
+
+            // File-based subtitles section
+            if (fileSubtitles && fileSubtitles.length > 0) {
+                if (html) html += `<div class="nf-sub-divider"></div>`;
+                html += `<div class="nf-sub-section-label">Subtitle Files</div>`;
+                html += fileSubtitles.map(f => {
+                    const ext = f.name.slice(f.name.lastIndexOf('.')).toUpperCase();
+                    const displayName = f.name.replace(/\.[^.]+$/, '').replace(/[_.]/g, ' ');
+                    return `
+                        <div class="nf-track-item" id="sub-track-${f.index}" onclick="selectTorrentSubtitle(${f.index}, '${escapeHtml(f.name)}')" title="${escapeHtml(f.name)}">
+                            <span class="nf-track-check">✓</span>
+                            <span class="nf-track-name">${escapeHtml(displayName)}</span>
+                            <span class="nf-track-lang">${ext}</span>
+                        </div>`;
+                }).join('');
+            }
+
+            if (!html) {
+                html = `<div class="nf-sub-empty">No subtitle tracks found in this video.</div>`;
+            }
+            listEl.innerHTML = html;
+        }
+
+        function markTrackActive(id) {
+            document.querySelectorAll('.nf-track-item').forEach(el => el.classList.remove('active'));
+            const item = document.getElementById(id);
+            if (item) item.classList.add('active');
+            // Show ON badge
+            document.getElementById('nfSubActiveBadge').classList.add('visible');
+        }
+
+        function selectTorrentSubtitle(fileIndex, name) {
+            const url = `/api/stream/${currentInfoHash}/subtitle/${fileIndex}`;
+            currentSubtitleUrl = url;
+            markTrackActive(`sub-track-${fileIndex}`);
+            addSubtitleTrack(url);
+            showToast(`Subtitle: ${name}`, 'success');
+        }
+
+        function selectEmbeddedSubtitle(trackIndex, label) {
+            const url = `/api/stream/${currentInfoHash}/embedded-sub/${activeFileIndex}/${trackIndex}`;
+            currentSubtitleUrl = url;
+            markTrackActive(`sub-emb-${trackIndex}`);
+            addSubtitleTrack(url);
+            showToast(`Subtitle: ${label}`, 'success');
+        }
+
+        async function probeEmbeddedSubtitles(fileIndex) {
+            window._embeddedSubtitleTracks = [];
+            const listEl = document.getElementById('torrentSubtitleList');
+            listEl.innerHTML = `<div class="nf-sub-loading"><div class="nf-mini-spinner"></div>Detecting subtitle tracks…</div>`;
+
+            try {
+                const res = await fetch(`/api/stream/${currentInfoHash}/probe-subs/${fileIndex}`);
+                if (!res.ok) throw new Error('Probe failed');
+                const data = await res.json();
+                window._embeddedSubtitleTracks = data.tracks || [];
+            } catch (e) {
+                console.warn('[PROBE-SUBS]', e.message);
+                window._embeddedSubtitleTracks = [];
+            }
+
+            renderSubtitlePanel(window._torrentSubtitleFiles || [], window._embeddedSubtitleTracks);
+
+            if (window._embeddedSubtitleTracks.length > 0) {
+                showToast(`Found ${window._embeddedSubtitleTracks.length} subtitle track(s) in video.`, 'info');
+            }
+        }
+
+        function addSubtitleTrack(url) {
+            const video = document.getElementById('mainVideoPlayer');
+            if (!video) return;
+
+            Array.from(video.querySelectorAll('track')).forEach(t => t.remove());
+
+            const track = document.createElement('track');
+            track.kind = 'subtitles';
+            track.label = 'Subtitles';
+            track.srclang = 'und';
+            track.src = url;
+            track.default = true;
+            video.appendChild(track);
+
+            setTimeout(() => {
+                if (video.textTracks && video.textTracks.length > 0) {
+                    video.textTracks[0].mode = 'showing';
+                }
+            }, 200);
+
+            // Apply current appearance styles
+            applySubtitleStyles();
+            document.getElementById('nfSubActiveBadge').classList.add('visible');
+        }
+
+        function disableSubtitles() {
+            const video = document.getElementById('mainVideoPlayer');
+            if (video) {
+                Array.from(video.querySelectorAll('track')).forEach(t => t.remove());
+                Array.from(video.textTracks || []).forEach(t => { t.mode = 'hidden'; });
+            }
+            if (currentSubtitleUrl && currentSubtitleUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(currentSubtitleUrl);
+            }
+            currentSubtitleUrl = null;
+            document.querySelectorAll('.nf-track-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('nfSubActiveBadge').classList.remove('visible');
+            const statusEl = document.getElementById('localSubtitleStatus');
+            if (statusEl) { statusEl.className = 'nf-upload-status'; statusEl.textContent = ''; }
+            const urlInput = document.getElementById('subtitleUrlInput');
+            if (urlInput) urlInput.value = '';
+            showToast('Subtitles turned off.', 'info');
+        }
+
+        function loadLocalSubtitle(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+            const statusEl = document.getElementById('localSubtitleStatus');
+            statusEl.className = 'nf-upload-status';
+            statusEl.textContent = `Reading ${file.name}…`;
+            statusEl.style.display = 'block';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                let text = e.target.result;
+
+                if (ext === '.srt') {
+                    text = 'WEBVTT\n\n' + text
+                        .replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+                        .replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2')
+                        .split(/\n\n+/)
+                        .map(cue => {
+                            const lines = cue.trim().split('\n');
+                            if (!lines[0]) return '';
+                            const start = /^\d+$/.test(lines[0]) ? 1 : 0;
+                            return lines.slice(start).join('\n').trim();
+                        }).filter(Boolean).join('\n\n');
+                }
+
+                if (currentSubtitleUrl && currentSubtitleUrl.startsWith('blob:')) URL.revokeObjectURL(currentSubtitleUrl);
+
+                const blob = new Blob([text], { type: 'text/vtt' });
+                const blobUrl = URL.createObjectURL(blob);
+                currentSubtitleUrl = blobUrl;
+
+                addSubtitleTrack(blobUrl);
+                statusEl.textContent = `✅ ${file.name}`;
+                statusEl.className = 'nf-upload-status ok';
+                showToast(`Subtitle loaded: ${file.name}`, 'success');
+            };
+            reader.onerror = () => {
+                statusEl.textContent = '❌ Failed to read file.';
+                statusEl.className = 'nf-upload-status err';
+            };
+            reader.readAsText(file);
+        }
+
+        function loadSubtitleFromUrl() {
+            const url = document.getElementById('subtitleUrlInput').value.trim();
+            if (!url) { showToast('Please enter a subtitle URL.', 'warning'); return; }
+            if (currentSubtitleUrl && currentSubtitleUrl.startsWith('blob:')) URL.revokeObjectURL(currentSubtitleUrl);
+            currentSubtitleUrl = url;
+            addSubtitleTrack(url);
+            showToast('External subtitle URL applied.', 'success');
+        }
+
+        function switchSubTab(tab) {
+            document.querySelectorAll('.nf-sub-src-btn').forEach((btn, i) => {
+                const tabs = ['torrent', 'upload', 'url'];
+                btn.classList.toggle('active', tabs[i] === tab);
+            });
+            document.querySelectorAll('.nf-sub-src-pane').forEach(pane => {
+                pane.classList.toggle('active', pane.id === `subpane-${tab}`);
+            });
+        }
+
+        // ==================== UTILS ====================
         function sortSearchResults(criteria) {
             if (!searchResults || searchResults.length === 0) return;
 
@@ -2078,6 +2858,8 @@
                 playerCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
+        // Apply default subtitle appearance styles on load
+        applySubtitleStyles();
     </script>
     
     <!-- Floating button to jump to player when playing -->
