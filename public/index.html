@@ -1432,6 +1432,104 @@
         #floatingPlayerJumpBtn:active {
             transform: translateY(-1px) scale(0.98);
         }
+
+        /* ===== SEARCH TERMINAL LOG PANEL ===== */
+        #search-terminal-wrapper {
+            margin-bottom: 20px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0,212,255,0.05);
+            display: none;
+        }
+        #search-terminal-wrapper.visible {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        .terminal-titlebar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: rgba(8, 12, 22, 0.95);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .terminal-titlebar-left { display: flex; align-items: center; gap: 10px; }
+        .terminal-dots { display: flex; gap: 6px; }
+        .terminal-dot { width: 11px; height: 11px; border-radius: 50%; }
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; }
+        .terminal-title-text {
+            font-size: 0.78rem; font-weight: 600;
+            color: rgba(255,255,255,0.4);
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            letter-spacing: 0.05em;
+        }
+        #terminal-status-badge {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.73rem; color: rgba(255,255,255,0.4); font-family: monospace;
+        }
+        .terminal-pulse {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse-dot 1.2s ease infinite;
+        }
+        .terminal-pulse.idle { background: rgba(255,255,255,0.2); animation: none; }
+        .terminal-pulse.done { background: var(--accent-cyan); animation: none; }
+        .terminal-pulse.error { background: var(--accent-red); animation: none; }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.7); }
+        }
+        #search-log-output {
+            background: rgba(5, 8, 16, 0.97);
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.8rem; line-height: 1.7;
+            padding: 14px 18px;
+            max-height: 220px; min-height: 90px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,212,255,0.2) transparent;
+        }
+        #search-log-output::-webkit-scrollbar { width: 5px; }
+        #search-log-output::-webkit-scrollbar-track { background: transparent; }
+        #search-log-output::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 4px; }
+        .log-line {
+            display: flex; gap: 10px; align-items: flex-start;
+            padding: 1px 0; animation: logFadeIn 0.2s ease;
+        }
+        @keyframes logFadeIn {
+            from { opacity: 0; transform: translateX(-6px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .log-ts { color: rgba(255,255,255,0.22); flex-shrink: 0; font-size: 0.72rem; margin-top: 2px; }
+        .log-level {
+            font-weight: 700; font-size: 0.72rem; flex-shrink: 0;
+            padding: 1px 6px; border-radius: 4px; letter-spacing: 0.04em; margin-top: 2px;
+        }
+        .log-level.INFO  { color: #60a5fa; background: rgba(96,165,250,0.1); }
+        .log-level.SUCCESS { color: #34d399; background: rgba(52,211,153,0.1); }
+        .log-level.WARN  { color: #fbbf24; background: rgba(251,191,36,0.1); }
+        .log-level.ERROR { color: #f87171; background: rgba(248,113,113,0.1); }
+        .log-msg { color: rgba(255,255,255,0.78); word-break: break-word; }
+
+        /* Cancel search button */
+        button.cancel-search {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.35);
+            color: #f87171;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 1rem; font-weight: 700;
+            transition: var(--transition-smooth);
+            white-space: nowrap;
+        }
+        button.cancel-search:hover {
+            background: rgba(239,68,68,0.25);
+            border-color: #ef4444; color: #fff;
+            box-shadow: 0 0 18px rgba(239,68,68,0.3);
+        }
     </style>
 </head>
 <body>
@@ -1461,7 +1559,27 @@
                         <input type="text" id="query" placeholder="Type movie, TV show, software, or anime name..." onkeydown="if(event.key==='Enter')search()">
                     </div>
                     <button class="primary" id="searchBtn" onclick="search()">🔍 Search</button>
+                    <button class="cancel-search" id="cancelSearchBtn" onclick="cancelSearch()" style="display:none;">✕ Cancel</button>
                 </div>
+            </div>
+
+            <!-- Real-time terminal log panel -->
+            <div id="search-terminal-wrapper">
+                <div class="terminal-titlebar">
+                    <div class="terminal-titlebar-left">
+                        <div class="terminal-dots">
+                            <div class="terminal-dot red"></div>
+                            <div class="terminal-dot yellow"></div>
+                            <div class="terminal-dot green"></div>
+                        </div>
+                        <span class="terminal-title-text">torrent-search — provider logs</span>
+                    </div>
+                    <div id="terminal-status-badge">
+                        <div class="terminal-pulse" id="terminalPulseDot"></div>
+                        <span id="terminalStatusText">searching...</span>
+                    </div>
+                </div>
+                <div id="search-log-output"></div>
             </div>
             <!-- Sort controls for Search Results -->
             <div id="search-sort-container" class="glass-card" style="margin-bottom: 16px; padding: 12px 20px; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
@@ -1777,9 +1895,56 @@
         });
 
         // ==================== SEARCH SECTION ====================
+        let activeSearchEventSource = null; // Track current SSE connection
+
+        function appendLogLine(level, message, timestamp) {
+            const output = document.getElementById('search-log-output');
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `
+                <span class="log-ts">${timestamp || ''}</span>
+                <span class="log-level ${level}">${level}</span>
+                <span class="log-msg">${escapeHtml(message)}</span>
+            `;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function setTerminalStatus(state, text) {
+            const dot = document.getElementById('terminalPulseDot');
+            const label = document.getElementById('terminalStatusText');
+            dot.className = 'terminal-pulse ' + (state || '');
+            label.textContent = text || '';
+        }
+
+        function showTerminalPanel() {
+            document.getElementById('search-terminal-wrapper').classList.add('visible');
+            document.getElementById('search-log-output').innerHTML = '';
+        }
+
+        function cancelSearch() {
+            if (activeSearchEventSource) {
+                activeSearchEventSource.close();
+                activeSearchEventSource = null;
+            }
+            setTerminalStatus('idle', 'cancelled');
+            appendLogLine('WARN', 'Search cancelled by user.', new Date().toISOString().replace('T',' ').slice(0,19));
+
+            const btn = document.getElementById('searchBtn');
+            const cancelBtn = document.getElementById('cancelSearchBtn');
+            btn.disabled = false;
+            btn.innerHTML = '🔍 Search';
+            cancelBtn.style.display = 'none';
+
+            const results = document.getElementById('results');
+            results.innerHTML = `<div class="no-data">🚫 Search was cancelled. Try a new search.</div>`;
+            showToast('Search cancelled.', 'warning');
+        }
+
         async function search() {
             const query = document.getElementById('query').value.trim();
             const btn = document.getElementById('searchBtn');
+            const cancelBtn = document.getElementById('cancelSearchBtn');
             const results = document.getElementById('results');
 
             if (!query) {
@@ -1787,51 +1952,93 @@
                 return;
             }
 
+            // Close any existing SSE connection
+            if (activeSearchEventSource) {
+                activeSearchEventSource.close();
+                activeSearchEventSource = null;
+            }
+
+            // Update UI
             btn.disabled = true;
             btn.innerHTML = `<span>⏳ Searching...</span>`;
+            cancelBtn.style.display = '';
             results.innerHTML = `
                 <div class="loading-spinner">
                     <div class="spinner"></div>
                     <p>Searching providers for "${escapeHtml(query)}"...</p>
                 </div>
             `;
-            
-            // Hide sort controls on new search
             document.getElementById('search-sort-container').style.display = 'none';
 
-            try {
-                const res = await fetch('/search/' + encodeURIComponent(query));
-                
-                if (!res.ok) {
-                    const data = await res.json();
-                    results.innerHTML = `<div class="error-banner">❌ ${escapeHtml(data.error || 'No results found.')}</div>`;
-                    showToast('Search request completed with no matches.', 'warning');
-                    return;
-                }
-                
-                const data = await res.json();
-                if (!data.data || data.data.length === 0) {
-                    results.innerHTML = `<div class="no-data">No torrents found. Try modifying your search keywords.</div>`;
-                    showToast('No matching torrents found.', 'info');
-                    return;
-                }
+            // Show terminal panel
+            showTerminalPanel();
+            setTerminalStatus('', 'searching...');
 
-                searchResults = data.data;
-                // Reset active sort button to Seeds
+            // Open SSE connection
+            const evtSource = new EventSource('/search/stream/' + encodeURIComponent(query));
+            activeSearchEventSource = evtSource;
+
+            evtSource.addEventListener('log', (e) => {
+                const d = JSON.parse(e.data);
+                appendLogLine(d.level, d.message, d.timestamp);
+            });
+
+            evtSource.addEventListener('results', (e) => {
+                const d = JSON.parse(e.data);
+                evtSource.close();
+                activeSearchEventSource = null;
+                btn.disabled = false;
+                btn.innerHTML = '🔍 Search';
+                cancelBtn.style.display = 'none';
+                setTerminalStatus('done', `done — ${d.data.length} results`);
+
+                searchResults = d.data;
                 document.querySelectorAll('#search-sort-container .tab-btn').forEach(b => b.classList.remove('active'));
                 document.getElementById('sort-btn-seeds').classList.add('active');
-
                 renderResults(searchResults);
                 document.getElementById('search-sort-container').style.display = 'flex';
-                showToast(`Found ${data.data.length} results.`, 'success');
-            } catch (err) {
-                console.error(err);
-                results.innerHTML = `<div class="error-banner">❌ Failed to search torrents. Server might be offline or blocked.</div>`;
-                showToast('Network error during search.', 'error');
-            } finally {
+                showToast(`Found ${d.data.length} results.`, 'success');
+            });
+
+            evtSource.addEventListener('error', (e) => {
+                try {
+                    const d = JSON.parse(e.data);
+                    results.innerHTML = `<div class="error-banner">❌ ${escapeHtml(d.error || 'No results found.')}</div>`;
+                    appendLogLine('ERROR', d.error || 'No results found.', new Date().toISOString().replace('T',' ').slice(0,19));
+                    showToast('Search returned no results.', 'warning');
+                } catch {
+                    results.innerHTML = `<div class="error-banner">❌ No results found.</div>`;
+                }
+                evtSource.close();
+                activeSearchEventSource = null;
                 btn.disabled = false;
-                btn.innerHTML = `🔍 Search`;
-            }
+                btn.innerHTML = '🔍 Search';
+                cancelBtn.style.display = 'none';
+                setTerminalStatus('error', 'failed');
+            });
+
+            evtSource.addEventListener('cancelled', (e) => {
+                evtSource.close();
+                activeSearchEventSource = null;
+                btn.disabled = false;
+                btn.innerHTML = '🔍 Search';
+                cancelBtn.style.display = 'none';
+                setTerminalStatus('idle', 'cancelled');
+                results.innerHTML = `<div class="no-data">🚫 Search was cancelled.</div>`;
+            });
+
+            // Handle connection-level errors (server offline etc.)
+            evtSource.onerror = () => {
+                if (!activeSearchEventSource) return; // already handled
+                evtSource.close();
+                activeSearchEventSource = null;
+                btn.disabled = false;
+                btn.innerHTML = '🔍 Search';
+                cancelBtn.style.display = 'none';
+                setTerminalStatus('error', 'connection error');
+                results.innerHTML = `<div class="error-banner">❌ Failed to connect to search server. Is it running?</div>`;
+                showToast('Connection error during search.', 'error');
+            };
         }
 
         function renderResults(torrents) {
