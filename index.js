@@ -792,35 +792,48 @@ app.get('/search/stream/:query', async (req, res) => {
         });
     });
 
-    // Helper function to find VLC path on Windows
+    // Helper function to find a VLC executable for the current platform
     function getVlcPath() {
         return new Promise((resolve) => {
-            const commonPaths = [
+            const configuredPath = process.env.VLC_PATH;
+            if (configuredPath) {
+                return resolve(configuredPath);
+            }
+
+            const commonPaths = process.platform === 'win32' ? [
                 'C:\\Program Files\\VideoLAN\\VLC\\vlc.exe',
                 'C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe'
+            ] : [
+                '/usr/bin/vlc',
+                '/usr/bin/cvlc',
+                '/bin/vlc',
+                '/bin/cvlc'
             ];
-            
+
             for (const p of commonPaths) {
                 if (fs.existsSync(p)) {
                     return resolve(p);
                 }
             }
-            
-            // Try querying Windows registry
-            exec('reg query "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\vlc.exe" /ve', (err, stdout) => {
-                if (!err && stdout) {
-                    const match = stdout.match(/REG_SZ\s+(.+)/);
-                    if (match && match[1]) {
-                        const registryPath = match[1].trim();
-                        if (fs.existsSync(registryPath)) {
-                            return resolve(registryPath);
+
+            if (process.platform === 'win32') {
+                // Try querying Windows registry
+                exec('reg query "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\vlc.exe" /ve', (err, stdout) => {
+                    if (!err && stdout) {
+                        const match = stdout.match(/REG_SZ\s+(.+)/);
+                        if (match && match[1]) {
+                            const registryPath = match[1].trim();
+                            if (fs.existsSync(registryPath)) {
+                                return resolve(registryPath);
+                            }
                         }
                     }
-                }
-                
-                // Fallback to default in path or standard location
-                resolve('vlc');
-            });
+
+                    resolve('vlc');
+                });
+            } else {
+                resolve('cvlc');
+            }
         });
     }
 
